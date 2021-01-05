@@ -272,10 +272,11 @@ def export_reportimage(imagedict,ordergeometry,image_comment):
 
 if __name__ == '__main__':
     start = timeit.default_timer()
-    orderID = '934438'#arcpy.GetParameterAsText(0)#'934578'#arcpy.GetParameterAsText(0)
-    scratch = r'C:\Users\JLoucks\Documents\JL\psr2'#arcpy.env.scratchFolder#r'C:\Users\JLoucks\Documents\JL\psr2'#arcpy.env.scratchFolder
+    orderID = arcpy.GetParameterAsText(0)#'934578'#arcpy.GetParameterAsText(0)
+    scratch = arcpy.env.scratchFolder#r'C:\Users\JLoucks\Documents\JL\psr2'#arcpy.env.scratchFolder
     job_directory = r'\\192.168.136.164\v2_usaerial\JobData\prod'
     mxdexport_template = r'\\cabcvan1gis007\gptools\Aerial_US\mxd\Aerial_US_Export_rev.mxd'
+    wgs84_template = r'\\cabcvan1gis007\gptools\Aerial_US\mxd\wgs84_template.mxd'
     MapScale = 6000
     arcpy.env.overwriteOutput=True
 
@@ -283,11 +284,16 @@ if __name__ == '__main__':
     orderInfo = Oracle('prod').call_function('getorderinfo',orderID)
     OrderNumText = str(orderInfo['ORDER_NUM'])
     job_folder = os.path.join(job_directory,OrderNumText)
-
+    ## Return aerial list from oracle
+    #oracle_autoprep = str({"PROCEDURE":Oracle.erisapi_procedures['getaeriallist'],"ORDER_NUM":OrderNumText})
+    #aerial_list_return = Oracle('test').call_erisapi(oracle_autoprep)
+    #aerial_list_json = json.loads(aerial_list_return[1])
 
     OrderGeometry = createGeometry(eval(orderInfo[u'ORDER_GEOMETRY'][u'GEOMETRY'])[0],orderInfo['ORDER_GEOMETRY']['GEOMETRY_TYPE'],scratch,'OrderGeometry.shp')
     shutil.copy(mxdexport_template,os.path.join(scratch,'template.mxd'))
+    shutil.copy(wgs84_template,os.path.join(scratch,'wgs84.mxd'))
     mxdexport_template = os.path.join(scratch,'template.mxd')
+    wgs84_template = os.path.join(scratch,'wgs84.mxd')
     ## Get order geometry 
 
     oracle_input = str({"PROCEDURE":Oracle.erisapi_procedures['getselectedimages'],"ORDER_NUM":OrderNumText})
