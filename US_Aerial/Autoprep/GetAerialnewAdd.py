@@ -152,7 +152,7 @@ def export_reportimage(imagepath,auid):
         #arcpy.mapping.ExportToJPEG(mxd,os.path.join(job_folder,'year'+'_source'+auid + '.jpg'),df,df_export_width=5100,df_export_height=6600,world_file=True,color_mode = '24-BIT_TRUE_COLOR', jpeg_quality = 50)
         #arcpy.DefineProjection_management(os.path.join(job_folder,'year'+'_source'+auid + '.jpg'), 3857)
         #shutil.copy(os.path.join(job_folder,'year'+'_source'+auid + '.jpg'),os.path.join(jpg_image_folder,auid + '.jpg'))
-        mxd.saveACopy(os.path.join(scratch,auid+'_export.mxd'))
+        mxd.saveACopy(os.path.join(scratch,str(auid)+'_export.mxd'))
         return extent
         del mxd
 
@@ -191,7 +191,8 @@ if __name__ == '__main__':
 
             imageuploadpath = originalpath
             TAB_upload_path = imageuploadpath.split('.')[0]+'.TAB'
-            job_image_name = str(aerialyear)+'_'+imagesource+'_'+str(auid)+'.'+str(imagename.split('.')[-1])
+            #job_image_name = str(aerialyear)+'_'+imagesource+'_'+str(auid)+'.'+str(imagename.split('.')[-1])
+            job_image_name = str(aerialyear)+'_'+imagesource+'_'+str(auid)+'.'+str(originalpath[-5:].split('.')[1])
             TAB_image_name = str(aerialyear)+'_'+imagesource+'_'+str(auid)+'.TAB'
 
             if imagecollection == 'DOQQ':                
