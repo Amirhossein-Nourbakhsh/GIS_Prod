@@ -665,7 +665,7 @@ if __name__ == '__main__':
 
         # Server Setting ############################
         code = 9093 if code.strip().lower()=='usa' else 9036 if code.strip().lower()=='can' else 9049 if code.strip().lower()=='mex' else ValueError
-        config = TestConfig(code)
+        config = ProdConfig(code)
 
         # PARAMETERS ################################
         orderGeometry = r'orderGeometry.shp'
@@ -681,7 +681,7 @@ if __name__ == '__main__':
         grid_unit = 'Kilometers' if code == 9036 and float(gridsize.strip())<100 else 'Meters' if code ==9036 else 'Miles'
         gridsize = '%s %s'%(gridsize,grid_unit)
         viewerpath = server_config['viewer']
-        currentuploadurl = server_config['viewer_upload']+r"/ErisInt/BIPublisherPortal_test/Viewer.svc/CurImageUpload?ordernumber="
+        currentuploadurl = server_config['viewer_upload']+r"/ErisInt/BIPublisherPortal_prod/Viewer.svc/CurImageUpload?ordernumber="
 
         # STEPS ####################################
         # 1  get order info by Oracle call

@@ -45,7 +45,7 @@ def getSingleElevation((X,Y),imglist,path,key):
     return None
 def getGoogleElevation((X,Y)):
     GOOGLE_URL = 'https://maps.googleapis.com/maps/api/elevation/json?locations='
-    googlekey = r'AIzaSyBmub_p_nY5jXrFMawPD8jdU0DgSrWfBic'
+    googlekey = r'AIzaSyBmub_p_nY5jXrFMawPD8jdU0DgSrWfBic' #google apikey, very important
     url = GOOGLE_URL + str(Y)+','+str(X) + '&key='+googlekey
 
     with contextlib.closing(urllib.urlopen(url)) as x:
@@ -58,9 +58,7 @@ def getGoogleElevation((X,Y)):
             return elevation
 if __name__ == '__main__':
     try:
-        input = '[[-79.38736389999991, 43.702032600000166]]'
-        xy=eval((str(input).strip("[]")))
-        # xy=eval((str(arcpy.GetParameterAsText(0)).strip("[]")))
+        xy=eval((str(arcpy.GetParameterAsText(0)).strip("[]")))
         config = DEM()
         # 1 read Module
         masterGrids = dem_footprints.dem_masterGrids
