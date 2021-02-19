@@ -135,10 +135,10 @@ def createGeometry(pntCoords,geometry_type,output_folder,output_name, spatialRef
 OrderID = arcpy.GetParameterAsText(0)#'968849'#arcpy.GetParameterAsText(0)'1014745'
 scale = arcpy.GetParameterAsText(1)#'2000'#arcpy.GetParameterAsText(1)'1200'
 unit = arcpy.GetParameterAsText(2)#'ft'#arcpy.GetParameterAsText(2)'ft'
-scratch = arcpy.env.scratchF0older#r'C:\Users\JLoucks\Documents\JL\test9'
+scratch = arcpy.env.scratchFolder#r'C:\Users\JLoucks\Documents\JL\test9'
 init_env = 'prod'
 jobfolder = os.path.join(r'\\cabcvan1eap003\v2_usaerial\JobData', init_env)
-mxdtemplate = r'\\cabcvan1gis006\GISData\Aerial_US\mxd\Aerial_US_Export_new.mxd'
+mxdtemplate = r'\\cabcvan1gis007\gptools\Aerial_US\mxd\Aerial_US_Export_new.mxd'
 #supported units ft ratio | default ratio
 
 if unit == 'ft':
