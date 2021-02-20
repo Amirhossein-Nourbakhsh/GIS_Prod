@@ -286,11 +286,11 @@ coverPic =  os.path.join(connectionPath,"python\ERIS_2018_ReportCover_Fire Insur
 secondPic =  os.path.join(connectionPath,"python\ERIS_2018_ReportCover_Second Page_F.jpg")
 
 try:
-    OrderIDText = r"1023560" #arcpy.GetParameterAsText(0)
-    OrderNumText = r"21021700366"
+    OrderIDText = r"" #arcpy.GetParameterAsText(0)
+    OrderNumText = r"21012200388"
     BufsizeText ='0.17'#arcpy.GetParameterAsText(1) # '0.17'#
     yesBoundary = "yes"#arcpy.GetParameterAsText(2) #yes/no/fixed
-    scratch = os.path.join(r"W:\Data Analysts\Alison\_GIS\FIM_SCRATCHY", OrderNumText)
+    scratch = os.path.join(r"W:\Data Analysts\Alison\_GIS\FIM_US_SCRATCHY", OrderNumText + "_debug")
     emgOrder= 'N'
     resolution = '800'
     if not os.path.exists(scratch):
@@ -326,7 +326,7 @@ try:
         cur = con.cursor()
         newlogofile = cur.callfunc('ERIS_CUSTOMER.IsCustomLogo', str, (str(OrderIDText),))
 
-        if newlogofile <> None:
+        if newlogofile != None:
             is_newLogofile = 'Y'
             if newlogofile =='RPS_RGB.gif':
                 newlogofile='RPS.png'
@@ -373,7 +373,7 @@ try:
         OrderCoord = eval(str(t[1]))
         RadiusType = str(t[2])
 
-    except Exception,e:
+    except Exception as e:
         logger.error("Error to get flag from Oracle " + str(e))
         raise
     finally:
@@ -486,7 +486,7 @@ try:
         extent = desc.extent
         # print extent.XMax, extent.XMin, extent.YMax, extent.YMin
         if (xMax < extent.XMax and xMin > extent.XMin and yMax < extent.YMax and yMin > extent.YMin):        # algorithm optimization
-            print "in extent"
+            print("in extent")
 
             shpLayer = arcpy.mapping.Layer(shp)
 
@@ -517,7 +517,7 @@ try:
     years_s = []
 
     if (i ==0):
-        print "NO records selected"
+        print("NO records selected")
     else:
         summaryList={}
         years_s = []
@@ -545,7 +545,7 @@ try:
                 fim_vol_info= [row for row in arcpy.da.SearchCursor(volbundary, ["IMAGE_NO",'VOLUMENAME'])]
                 for fim_sheet in fim_vol_info:
                     volumeName_new = str(fim_sheet[1]).strip()                                          # e.g. Long Beach 1914 - Sep 1963; Volume 3@@@California@Long Beach@1963@3
-                    print volumeName_new
+                    print(volumeName_new)
                     state = volumeName_new.split('@@@')[1].split('@')[0]                                # e.g. California
                     city = volumeName_new.split('@@@')[1].split('@')[1]                                 # e.g. los angeles
                     year = int(volumeName_new.split('@@@')[1].split('@')[2].split('(')[0].strip())      # e.g. 1980
@@ -684,28 +684,7 @@ try:
         FIPpdf = os.path.join(scratch, 'FIPExport_'+volumeNums+"_"+str(year)+'.pdf')
         arcpy.mapping.ExportToPDF(mxdFIP, FIPpdf, "PAGE_LAYOUT", 640, 480, resolution, "BEST", "RGB", True, "ADAPTIVE", "RASTERIZE_BITMAP", False, True, "None", True, 90)
 
-        for lyr in arcpy.mapping.ListLayers(mxdFIP, "", dfFIP)[2:3]:
-            ext = lyr.getExtent()
-            xMin, xMax = ext.XMin, ext.XMax
-            yMin, yMax = ext.YMin, ext.YMax
-
-        for lyr in arcpy.mapping.ListLayers(mxdFIP, "", dfFIP)[2:]:
-            ext = lyr.getExtent()
-            if ext.XMin < xMin:
-                xMin = ext.XMin
-            if ext.YMin < yMin:
-                yMin = ext.YMin
-            if ext.XMax > xMax:
-                xMax = ext.XMax
-            if ext.YMax > yMax:
-                yMax = ext.YMax
-
-        # set df extent to new extent
-        dfFIP.extent = arcpy.Extent(xMin, yMin, xMax, yMax)
         arcpy.RefreshActiveView()
-
-        FIPpdf1 = os.path.join(scratch, 'FIPExport_'+volumeNums+"_"+str(year)+'_1.pdf')
-        arcpy.mapping.ExportToPDF(mxdFIP, FIPpdf1, "PAGE_LAYOUT", 640, 480, resolution, "BEST", "RGB", True, "ADAPTIVE", "RASTERIZE_BITMAP", False, True, "None", True, 90)
         mxdFIP.saveACopy(os.path.join(scratch, "test_"+volumeNums+"_"+str(year)+".mxd"))
 
         if (yesBoundary.lower() == 'yes' and (OrderType.lower() == "polyline" or OrderType.lower() == "polygon")):
@@ -728,14 +707,13 @@ try:
             arcpy.AddMessage("FIPpdf is " + FIPpdf)
         pdflist.append(FIPpdf)
 
-        pdflist.append(FIPpdf1)
         arcpy.Delete_management("in_memory")
         FIPpdf = None
         del queryLayer
         del imageLayer
         del dfFIP
         del mxdFIP
-
+    print(pdflist)
     NRF='N'
     pagesize = portrait(letter)
     [PAGE_WIDTH,PAGE_HEIGHT]=pagesize[:2]
@@ -766,14 +744,7 @@ try:
             output.addBookmark("Summary Page",j+1)
 
         for i in range( len(years_s)):
-##            pdf = pdflist[2*i]
-##            pdf1 = pdflist[2*i+1]
-##            page = open(pdf,'rb')
-##            page1= open(pdf1,'rb')
-##            output.addPage(PdfFileReader(page).getPage(0))
-##            output.addPage(PdfFileReader(page1).getPage(0))
-##            output.addBookmark(str(years_s[i]), 2*i+j+2)
-            pdf = pdflist[2*i]
+            pdf = pdflist[i]
             page = open(pdf,'rb')
             output.addPage(PdfFileReader(page).getPage(0))
             output.addBookmark(str(years_s[i]), i+j+2)
@@ -789,23 +760,6 @@ try:
         summaryfile = None
 
 # Save Summary ###################################################################################################
-##        summarylist = {"ORDER_ID":OrderIDText,"FILENAME":pdfreport_name,"SUMMARY":summarydata}
-##        summload = json.dumps(summarylist,ensure_ascii=False)
-##        print(summload)
-##        try:
-##            con = cx_Oracle.connect(connectionString)
-##            cur = con.cursor()
-##
-##            v_return = 'Success'
-##            orcstatus = cur.callproc('eris_gis.addFimSummary', [str(summload),v_return,])
-##            if orcstatus[-1] == v_return:
-##                print "Summary populated to Oracle"
-##            else:
-##                raise Exception
-##        finally:
-##            cur.close()
-##            con.close()
-
     needViewer = 'N'
     try:
         con = cx_Oracle.connect(connectionString)
@@ -923,5 +877,5 @@ except:
         con.close()
     raise    # raise the error again
 
-print "Final FIM report directory: " + (str(reportcheckFolder + "\\" + OrderNumText + "_US_FIM.pdf"))
-print ("__________DONE")
+print("Final FIM report directory: " + (str(reportcheckFolder + "\\" + OrderNumText + "_US_FIM.pdf")))
+print("__________DONE")
