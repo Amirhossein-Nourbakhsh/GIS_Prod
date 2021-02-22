@@ -215,7 +215,7 @@ srCanadaAlbers = arcpy.SpatialReference(r"\\cabcvan1gis006\GISData\RSC_Ontario\P
 # scratch = arcpy.env.scratchGDB
 
 # Local -------------------------------------------------------------------------------------------------------------------------
-MapTypes = 'OBM,Soils,Physiography,ANSI,Surficial Geology,Bedrock Geology'#OBM#Soils #Physiography#ANSI#Surficial Geology#Bedrock Geology
+MapTypes = 'OBM,Soils,Physiography,ANSI,Surficial Geology,Bedrock Geology'#OBM #Soils #Physiography #ANSI #Surficial Geology #Bedrock Geology
 AddressString = ''#arcpy.GetParameterAsText(2)
 OrderType = ''#arcpy.GetParameterAsText(3)
 OrderCoords = []
@@ -224,7 +224,7 @@ buffer2DistanceValue = '2000'#arcpy.GetParameterAsText(6)
 buffer2Distance = buffer2DistanceValue + " METERS"
 
 OrderNumText = '20311300062' #arcpy.GetParameterAsText(1)
-scratchfolder = os.path.join(r'W:\Data Analysts\Alison\_GIS\RSC_SCRATCHY', OrderNumText)
+scratchfolder = os.path.join(r'\\cabcvan1gis005\MISC_DataManagement\_AW\RSC_ON_SCRATCHY', OrderNumText)
 if not os.path.exists(scratchfolder):
     os.mkdir(scratchfolder)
 scratch =os.path.join(scratchfolder,"scratch.gdb")
@@ -245,8 +245,13 @@ try:
     t = cur.fetchone()
     OrderIDText = str(t[0])
     AddressString = str(t[1])
-    OrderType = re.search('("geometry_type":")(\w+)(",)', str(t[2])).group(2).strip()
-    OrderCoords = json.loads(re.search('("geometry":")(\[\[\[.+\]\]\])(")', str(t[2])).group(2))
+    # OrderType = re.search('("geometry_type":")(\w+)(",)', str(t[2])).group(2).strip()                 # does not get updated if changes were made
+    # OrderCoords = json.loads(re.search('("geometry":")(\[\[\[.+\]\]\])(")', str(t[2])).group(2))      # does not get updated if changes were made
+
+    cur.execute("select geometry_type,geometry from eris_order_geometry where order_id =" + OrderIDText)
+    t = cur.fetchone()
+    OrderType = str(t[0])
+    OrderCoords =  json.loads(str(t[1]))
 finally:
     cur.close()
     con.close()
