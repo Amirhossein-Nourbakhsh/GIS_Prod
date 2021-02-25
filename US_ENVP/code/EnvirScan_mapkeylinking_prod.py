@@ -200,9 +200,9 @@ try:
 
 #------------------------------------------------------------------------------------------------------------------
     # Pull in the Geoporcessing parameters in to local valiables.
-    OrderIDText = arcpy.GetParameterAsText(0)'#"1028897"
+    OrderIDText = arcpy.GetParameterAsText(0) #"1028897"
     Buffer1 = "0.125"
-    arcpy.env.scratchWorkspace#r"E:\gptools\testing\temp1"# scratch = r"\\cabcvan1gis005\MISC_DataManagement\_AW\ENVP_US_scratchy\21022500085" 
+    arcpy.env.scratchWorkspace # scratch = r"\\cabcvan1gis005\MISC_DataManagement\_AW\ENVP_US_scratchy\21022500085" 
 #------------------------------------------------------------------------------------------------------------------    
     count1 = 0
     countI = 0
