@@ -15,7 +15,7 @@ import os
 connectionString = 'eris_gis/gis295@cabcvan1ora003.glaciermedia.inc:1521/GMPRODC' #'ERIS_GIS/gis295@GMPRODC.glaciermedia.inc'
 report_path = r"\\cabcvan1eap006\ErisData\Reports\prod\noninstant_reports"
 reportcheck_path = r'\\cabcvan1eap006\ErisData\Reports\prod\reportcheck'
-connectionPath = r"\\cabcvan1gis007\GISData\EnvironmentScanReport"
+connectionPath = r"\\cabcvan1gis007\gptools\EnvironmentScanReport"
 viewer_path = r"\\CABCVAN1EAP006\ErisData\Reports\prod\viewer"
 upload_link = r"http://CABCVAN1EAP006/ErisInt/BIPublisherPortal_prod/Viewer.svc/"
 #production: upload_link = r"http://CABCVAN1OBI002/ErisInt/BIPublisherPortal_prod/Viewer.svc/"
