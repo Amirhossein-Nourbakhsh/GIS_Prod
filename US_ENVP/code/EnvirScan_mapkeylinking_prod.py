@@ -198,9 +198,12 @@ try:
 
     # Pull in the Geoporcessing parameters in to local valiables.
 
-    OrderIDText = '1000019'#arcpy.GetParameterAsText(0)#'567991'#
-    Buffer1 = arcpy.GetParameterAsText(1)#"0.125"#
-    scratch =r'C:\Users\JLoucks\Documents\JL\test2'#arcpy.env.scratchWorkspace#r"E:\gptools\testing\temp1"#
+#------------------------------------------------------------------------------------------------------------------
+    # Pull in the Geoporcessing parameters in to local valiables.
+    OrderIDText = r"1028897" #arcpy.GetParameterAsText(0)#'567991'#
+    Buffer1 = "0.125"
+    scratch = r"\\cabcvan1gis005\MISC_DataManagement\_AW\ENVP_US_scratchy\21022500085" #arcpy.env.scratchWorkspace#r"E:\gptools\testing\temp1"#
+#------------------------------------------------------------------------------------------------------------------    
     count1 = 0
     countI = 0
     countP = 0
@@ -433,15 +436,15 @@ try:
         streetList0 = getStreetList(outBuffer,country)
 
 #8 add orderID and UTM zone to projected centroid
-    print OrderIDText
+    arcpy.DeleteField_management(projPointSHP,"Id")
+    arcpy.AddField_management(projPointSHP,"ID","Long", "10")
     cur = arcpy.UpdateCursor(projPointSHP)
     for row in cur:
-        row.ERIS_ID= int(OrderIDText)
-        #row['FID'] = OrderIDText
+        print(OrderIDText)
+        row.setValue("ID", float(OrderIDText))
         cur.updateRow(row)
     del row
     del cur
-
 
     UT= arcpy.SearchCursor(projPointSHP)
     for row in UT:
@@ -474,7 +477,7 @@ try:
 
     ERIS_clipcopy= os.path.join(scratch,"ERISCC.shp")
     arcpy.CopyFeatures_management(ERISPR, ERIS_clipcopy)
-    arcpy.Integrate_management(ERIS_clipcopy, ".5 Meters")
+    arcpy.Integrate_management(ERIS_clipcopy, ".2 Meters")
 
 #10. Calculate Distance with integration and spatial join- can be easily done with Distance tool along with direction if ArcInfo or Advanced license
 
@@ -743,5 +746,3 @@ except:
     #
     print pymsg + "\n"
     print msgs
-
-

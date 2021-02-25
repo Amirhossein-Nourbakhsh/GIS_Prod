@@ -12,7 +12,7 @@ from collections import OrderedDict
 import os
 
 # PROD #
-connectionString = 'ERIS_GIS/gis295@GMPRODC.glaciermedia.inc'
+connectionString = 'eris_gis/gis295@cabcvan1ora003.glaciermedia.inc:1521/GMPRODC' #'ERIS_GIS/gis295@GMPRODC.glaciermedia.inc'
 report_path = r"\\cabcvan1eap006\ErisData\Reports\prod\noninstant_reports"
 reportcheck_path = r'\\cabcvan1eap006\ErisData\Reports\prod\reportcheck'
 connectionPath = r"\\cabcvan1gis006\GISData\EnvironmentScanReport"
