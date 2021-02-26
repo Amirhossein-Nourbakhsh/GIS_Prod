@@ -19,7 +19,7 @@ import traceback
 from numpy import gradient
 from numpy import arctan2, arctan, sqrt
 import EnvirScan_config
-
+import arcpy
 ## function to form the datasources list
 def ds(DataSources):
     DataSources = DataSources.replace(" ","")
@@ -169,8 +169,6 @@ def calMapkey(fclass):
     del row
   arcpy.CopyFeatures_management(temp, fclass)
 
-
-
 try:
 
     starttime = time.time()
@@ -201,8 +199,9 @@ try:
 #------------------------------------------------------------------------------------------------------------------
     # Pull in the Geoporcessing parameters in to local valiables.
     OrderIDText = arcpy.GetParameterAsText(0) #"1028897"
+    # OrderIDText = '1028897'
     Buffer1 = "0.125"
-    arcpy.env.scratchWorkspace # scratch = r"\\cabcvan1gis005\MISC_DataManagement\_AW\ENVP_US_scratchy\21022500085" 
+    scratch = arcpy.env.scratchWorkspace
 #------------------------------------------------------------------------------------------------------------------    
     count1 = 0
     countI = 0
@@ -670,8 +669,6 @@ try:
         arcpy.mapping.AddLayer(df, newLayerERIS1, "TOP")
         arcpy.DeleteFeatures_management("in_memory\\tempI")
 
-
-#
 ##add geometry on main Map
     if OrderType.lower()== 'point':
         geom=EnvirScan_config.orderGeomlyrfile_point
@@ -705,9 +702,8 @@ try:
     arcpy.mapping.ExportToPDF(mxd, outputLayoutPDF1, "PAGE_LAYOUT", 640, 480, 250, "BEST", "RGB", True, "ADAPTIVE", "VECTORIZE_BITMAP", False, True, "LAYERS_AND_ATTRIBUTES", True, 90)
     mxd.saveACopy(os.path.join(scratch, "mxd.mxd"))
     del mxd
-
     shutil.copy(os.path.join(scratch, "map_" + OrderNumText + ".pdf"), EnvirScan_config.report_path)#"\\cabcvan1obi002\ErisData\Reports\test\noninstant_reports")
-    arcpy.SetParameterAsText(1, os.path.join(scratch, "map_" + OrderNumText + ".pdf"))
+    arcpy.SetParameterAsText(1, os.path.join(EnvirScan_config.report_path,"map_" + OrderNumText + ".pdf"))
 
 
 
