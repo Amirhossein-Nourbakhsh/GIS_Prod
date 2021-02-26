@@ -703,7 +703,7 @@ try:
     mxd.saveACopy(os.path.join(scratch, "mxd.mxd"))
     del mxd
     shutil.copy(os.path.join(scratch, "map_" + OrderNumText + ".pdf"), EnvirScan_config.report_path)#"\\cabcvan1obi002\ErisData\Reports\test\noninstant_reports")
-    arcpy.SetParameterAsText(1, os.path.join(EnvirScan_config.report_path,"map_" + OrderNumText + ".pdf"))
+    arcpy.SetParameterAsText(1, os.path.join(scratch, "map_" + OrderNumText + ".pdf")
 
 
 
