@@ -18,7 +18,6 @@ reportcheck_path = r'\\cabcvan1eap006\ErisData\Reports\prod\reportcheck'
 connectionPath = r"\\cabcvan1gis007\gptools\EnvironmentScanReport"
 viewer_path = r"\\CABCVAN1EAP006\ErisData\Reports\prod\viewer"
 upload_link = r"http://CABCVAN1EAP006/ErisInt/BIPublisherPortal_prod/Viewer.svc/"
-#production: upload_link = r"http://CABCVAN1OBI002/ErisInt/BIPublisherPortal_prod/Viewer.svc/"
 
 # ORDER SETTING##
 orderGeomlyrfile_point = os.path.join(connectionPath,r"layer","SiteMaker.lyr")
