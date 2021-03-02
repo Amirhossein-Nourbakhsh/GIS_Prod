@@ -19,7 +19,7 @@ import traceback
 from numpy import gradient
 from numpy import arctan2, arctan, sqrt
 import EnvirScan_config
-import arcpy
+
 ## function to form the datasources list
 def ds(DataSources):
     DataSources = DataSources.replace(" ","")
@@ -35,10 +35,10 @@ def ds(DataSources):
 def getStreetList(query, unit1):
 
     if country== 'US':
-        streetlyr = r"\\cabcvan1gis007\gptools\ERISReport\layer\Streets\Streets_US.lyr"
+        streetlyr = r"\\cabcvan1gis006\GISData\ERISReport\ERISReport\PDFToolboxes\layer\Streets\Streets_US.lyr"
         streetFieldName = "FULLNAME"
     else:
-        streetlyr = r"\\cabcvan1gis007\gptools\ERISReport\layer\Streets\Streets_CA.lyr"
+        streetlyr = r"\\cabcvan1gis006\GISData\ERISReport\ERISReport\PDFToolboxes\layer\Streets\Streets_CA.lyr"
         streetFieldName = "STREET"
 
     try:
@@ -169,6 +169,8 @@ def calMapkey(fclass):
     del row
   arcpy.CopyFeatures_management(temp, fclass)
 
+
+
 try:
 
     starttime = time.time()
@@ -198,10 +200,11 @@ try:
 
 #------------------------------------------------------------------------------------------------------------------
     # Pull in the Geoporcessing parameters in to local valiables.
-    OrderIDText = arcpy.GetParameterAsText(0) #"1028897"
-    # OrderIDText = '1028897'
+    # OrderIDText = arcpy.GetParameterAsText(0)
+    # scratch = arcpy.env.scratchWorkspace
+    OrderIDText = "1030302"
+    scratch = r"\\cabcvan1gis005\MISC_DataManagement\_AW\ENVP_US_scratchy\test_test"
     Buffer1 = "0.125"
-    scratch = arcpy.env.scratchWorkspace
 #------------------------------------------------------------------------------------------------------------------    
     count1 = 0
     countI = 0
@@ -440,10 +443,13 @@ try:
     cur = arcpy.UpdateCursor(projPointSHP)
     for row in cur:
         print(OrderIDText)
+        # row.ID= OrderIDText
+        #row['FID'] = OrderIDText
         row.setValue("ID", float(OrderIDText))
         cur.updateRow(row)
     del row
     del cur
+
 
     UT= arcpy.SearchCursor(projPointSHP)
     for row in UT:
@@ -460,13 +466,13 @@ try:
     sites = arcpy.UpdateCursor(ERISPR)
     siteIDs = []
     for row in sites:
-        siteID = int(row.getValue("ID"))   #get the ERIS site ID
+        siteID = int(row.getValue("ID_CHAR"))   #get the ERIS site ID
         #logger.info("processing siteID below " + str(siteID))
         if siteID in siteIDs:
             sites.deleteRow(row)
             #logger.info("delete row with ID: " + str(siteID))
         else:
-            siteIDs.append(int(row.getValue("ID")))
+            siteIDs.append(int(row.getValue("ID_CHAR")))
             #logger.info("stored siteID " + str(int(row.getValue("ID"))) + " for search")
     #del row
     del sites
@@ -476,7 +482,7 @@ try:
 
     ERIS_clipcopy= os.path.join(scratch,"ERISCC.shp")
     arcpy.CopyFeatures_management(ERISPR, ERIS_clipcopy)
-    arcpy.Integrate_management(ERIS_clipcopy, ".2 Meters")
+    arcpy.Integrate_management(ERIS_clipcopy, ".5 Meters")
 
 #10. Calculate Distance with integration and spatial join- can be easily done with Distance tool along with direction if ArcInfo or Advanced license
 
@@ -574,8 +580,11 @@ try:
     arcpy.Sort_management(ERIS_fin, ERIS_disp, [["MapKeyLoc", "ASCENDING"]])
 #14
     # Process: xmlWriter
-    arcpy.AddField_management(ERIS_sja, "ERISID", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
-    arcpy.CalculateField_management(ERIS_sja, "ERISID", '!ERIS_ID!', "PYTHON_9.3", "")
+    arcpy.AddField_management(os.path.join(scratch,"ERISSAT_temp.shp"), field_name="ERISID", field_type="LONG", field_precision="20", field_scale="", field_length="", field_alias="", field_is_nullable="NULLABLE", field_is_required="NON_REQUIRED", field_domain="")
+    arcpy.CalculateField_management(in_table=os.path.join(scratch,"ERISSAT_temp.shp"), field="ERISID", expression="!ID_CHAR!", expression_type="PYTHON_9.3", code_block="")
+
+    # arcpy.AddField_management(ERIS_sja, "ERISID", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+    # arcpy.CalculateField_management(ERIS_sja, "ERISID", '!ERIS_ID!', "PYTHON_9.3", "")
     xmlName= os.path.join(scratch,"XML"+OrderIDText+".xml")
     log= os.path.join(scratch,  "log"+OrderIDText+".txt")
     arcpy.ImportToolbox(os.path.join(r"\\cabcvan1gis006\GISData\PSR\python","ERIS.tbx"))
@@ -669,6 +678,8 @@ try:
         arcpy.mapping.AddLayer(df, newLayerERIS1, "TOP")
         arcpy.DeleteFeatures_management("in_memory\\tempI")
 
+
+#
 ##add geometry on main Map
     if OrderType.lower()== 'point':
         geom=EnvirScan_config.orderGeomlyrfile_point
@@ -702,8 +713,9 @@ try:
     arcpy.mapping.ExportToPDF(mxd, outputLayoutPDF1, "PAGE_LAYOUT", 640, 480, 250, "BEST", "RGB", True, "ADAPTIVE", "VECTORIZE_BITMAP", False, True, "LAYERS_AND_ATTRIBUTES", True, 90)
     mxd.saveACopy(os.path.join(scratch, "mxd.mxd"))
     del mxd
+
     shutil.copy(os.path.join(scratch, "map_" + OrderNumText + ".pdf"), EnvirScan_config.report_path)#"\\cabcvan1obi002\ErisData\Reports\test\noninstant_reports")
-    arcpy.SetParameterAsText(1, os.path.join(scratch, "map_" + OrderNumText + ".pdf")
+    arcpy.SetParameterAsText(1, os.path.join(scratch, "map_" + OrderNumText + ".pdf"))
 
 
 
