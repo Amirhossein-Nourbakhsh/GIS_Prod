@@ -542,22 +542,25 @@ try:
     # Return tool error messages for use with a script tool
     #print elevationArray
     arcpy.Project_management(ERIS_sja,ERIS_sja_final,out_coordinate_system)
-    ERIS_sja = ERIS_sja_final
 
 
 #11. Add mapkey with script from ERIS toolbox
-    arcpy.AddField_management(ERIS_sja, "MapKeyNo", "SHORT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+    arcpy.AddField_management(ERIS_sja_final, "MapKeyNo", "SHORT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
      # Process: Add Field for mapkey rank storage based on location and total number of keys at one location
-    arcpy.AddField_management(ERIS_sja, "MapKeyLoc", "SHORT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
-    arcpy.AddField_management(ERIS_sja, "MapKeyTot", "SHORT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
-    calMapkey(ERIS_sja)
+    arcpy.AddField_management(ERIS_sja_final, "MapKeyLoc", "SHORT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+    arcpy.AddField_management(ERIS_sja_final, "MapKeyTot", "SHORT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+    calMapkey(ERIS_sja_final)
 
-
-    arcpy.AddField_management(ERIS_sja, "Direction", "TEXT", "", "", "3", "", "NULLABLE", "NON_REQUIRED", "")
-    desc = arcpy.Describe(ERIS_sja)
+    arcpy.AddField_management(ERIS_sja_final, "Direction", "TEXT", "", "", "3", "", "NULLABLE", "NON_REQUIRED", "")
+    arcpy.AddField_management(ERIS_sja_final, "ERISID", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+    desc = arcpy.Describe(ERIS_sja_final)
     shapefieldName = desc.ShapeFieldName
-    rows = arcpy.UpdateCursor(ERIS_sja)
+    rows = arcpy.UpdateCursor(ERIS_sja_final)
+
     for row in rows:
+        erisid = int(row.getValue("ID_CHAR"))
+        row.setValue("ERISID", float(erisid))
+
         if(row.Distance<0.001):  #give onsite, give "-" in Direction field
             directionText = '-'
         else:
@@ -575,20 +578,15 @@ try:
     del rows
      # Process: Select
     ERIS_fin= os.path.join(scratch,"ErisClip1.shp")
-    arcpy.Select_analysis(ERIS_sja, ERIS_fin, "\"MapKeyTot\" = 1")
+    arcpy.Select_analysis(ERIS_sja_final, ERIS_fin, "\"MapKeyTot\" = 1")
     ERIS_disp= os.path.join(scratch,"ErisClip.shp")
-    arcpy.Sort_management(ERIS_fin, ERIS_disp, [["MapKeyLoc", "ASCENDING"]])
+    arcpy.Sort_management(ERIS_sja_final, ERIS_disp, [["MapKeyLoc", "ASCENDING"]])
 #14
     # Process: xmlWriter
-    arcpy.AddField_management(os.path.join(scratch,"ERISSAT_temp.shp"), field_name="ERISID", field_type="LONG", field_precision="20", field_scale="", field_length="", field_alias="", field_is_nullable="NULLABLE", field_is_required="NON_REQUIRED", field_domain="")
-    arcpy.CalculateField_management(in_table=os.path.join(scratch,"ERISSAT_temp.shp"), field="ERISID", expression="!ID_CHAR!", expression_type="PYTHON_9.3", code_block="")
-
-    # arcpy.AddField_management(ERIS_sja, "ERISID", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
-    # arcpy.CalculateField_management(ERIS_sja, "ERISID", '!ERIS_ID!', "PYTHON_9.3", "")
     xmlName= os.path.join(scratch,"XML"+OrderIDText+".xml")
     log= os.path.join(scratch,  "log"+OrderIDText+".txt")
     arcpy.ImportToolbox(os.path.join(r"\\cabcvan1gis006\GISData\PSR\python","ERIS.tbx"))
-    arcpy.xmlWriter_ERIS(projPointSHP, ERIS_sja,xmlName, log)
+    arcpy.xmlWriter_ERIS(projPointSHP, ERIS_sja_final,xmlName, log)
 
 #write streetlist to Oracle
     try:
@@ -622,7 +620,7 @@ try:
     arcpy.mapping.AddLayer(df,bufferLayer,"Bottom")
 #
     ds_oids = []
-    rows = arcpy.SearchCursor(ERIS_sja)
+    rows = arcpy.SearchCursor(ERIS_sja_final)
     for row in rows:
         ds_oids.append(int(row.DS_OID))
     #count1 = len(ds_oids)
@@ -649,8 +647,6 @@ try:
         cur.close()
         con.close()
 
-
-
     if 'PERMIT' in IncidentDic.keys():
         permitText=' '
         countP = sum([ ds_oids.count(a) for a in IncidentDic['PERMIT']])
@@ -658,7 +654,7 @@ try:
             permitText = permitText+ str(ds_oid)+' OR DS_OID ='
         permitText = permitText[:-12]
         ErisClip_permit= os.path.join(scratch,"ErisClip_permit.shp")
-        arcpy.Select_analysis(ERIS_sja, "in_memory\\tempP", "\"DS_OID\" ="+permitText)
+        arcpy.Select_analysis(ERIS_sja_final, "in_memory\\tempP", "\"DS_OID\" ="+permitText)
         arcpy.Select_analysis("in_memory\\tempP", ErisClip_permit, "\"MapKeyTot\" = 1")
         newLayerERIS = arcpy.mapping.Layer(EnvirScan_config.ERIScanPermit)
         newLayerERIS.replaceDataSource(scratch, "SHAPEFILE_WORKSPACE", "ErisClip_permit")
@@ -671,7 +667,7 @@ try:
             inciText = inciText+ str(ds_oid)+' OR DS_OID ='
         inciText = inciText[:-12]
         ErisClip_incident= os.path.join(scratch,"ErisClip_incident.shp")
-        arcpy.Select_analysis(ERIS_sja, "in_memory\\tempI", "\"DS_OID\" ="+inciText)
+        arcpy.Select_analysis(ERIS_sja_final, "in_memory\\tempI", "\"DS_OID\" ="+inciText)
         arcpy.Select_analysis("in_memory\\tempI", ErisClip_incident, "\"MapKeyTot\" = 1")
         newLayerERIS1 = arcpy.mapping.Layer(EnvirScan_config.ERIScanIncident)
         newLayerERIS1.replaceDataSource(scratch, "SHAPEFILE_WORKSPACE", "ErisClip_incident")
