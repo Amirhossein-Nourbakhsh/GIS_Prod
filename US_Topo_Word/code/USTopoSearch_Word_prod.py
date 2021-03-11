@@ -199,8 +199,9 @@ def createWORD(seriesText,diction, diction_s,app):
 
     years = diction.keys()
     years.sort(reverse = True)
+
     for year in years:
-        print ("#0 " + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()) + "    " + str(year))
+        print ("#0 " + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()) + "    " + str(year) + "------")
         if int(year) < 2008:
             tifdir = tifdir_h
             if len(years) > 1:
@@ -216,7 +217,7 @@ def createWORD(seriesText,diction, diction_s,app):
             else:
                 topofile = topolyrfile_none
             mscale = 24000
-        print ("########" + str(mscale))
+        print ("mscale is " + str(mscale))
 
         for lyr in arcpy.mapping.ListLayers(mxd, "", df):
             if lyr.name == "Project Property":
@@ -225,15 +226,23 @@ def createWORD(seriesText,diction, diction_s,app):
                 else:
                     lyr.visible = True
                 df.extent = lyr.getSelectedExtent(False)
+                df.scale = df.scale * 1.1
+                print(df.scale)
 
-        # if seriesText == "7.5":
-        #     df.scale = 24000
-        # else:
-        #     df.scale = 62500
+        if df.scale < mscale:
+            scale = mscale
+        else:
+            # if df.scale > 2 * mscale:  # 2 is an empirical number
+            if df.scale > 1.5 * mscale:
+                needtif = True
+                print("***** big scale")
+            else:
+                print("scale is slightly bigger than the original map scale, use the standard topo map scale.")
+            
+        print(df.scale)
 
         # use uniform presentation scale for all maps
-        df.scale = 24000
-        # df.scale = 6000
+        # df.scale = 24000
         arcpy.RefreshTOC()
         arcpy.RefreshActiveView()
 
@@ -491,9 +500,12 @@ try:
     # yesBoundary = arcpy.GetParameterAsText(1)
     # scratch = arcpy.env.scratchWorkspace
     OrderIDText = ""
-    OrderNumText = r"20100100012"
+    OrderNumText = r"21030500136"
     yesBoundary = 'yes'
-    scratch = os.path.join(r"W:\Data Analysts\Alison\_GIS\WORD_SCRATCHY", OrderNumText)
+    scratch = os.path.join(r"\\cabcvan1gis005\MISC_DataManagement\_AW\TOPO_US_WORD_SCRATCHY", OrderNumText)
+    if not os.path.exists(scratch):
+        os.mkdir(scratch)
+    needtif = False
 # ===================================================================================================
 
     if yesBoundary == 'arrow':
@@ -746,7 +758,6 @@ try:
                         # print "date on  map " + yeardict["date on map"]
                         yearcandidates.append(int(yeardict["date on map"]))
 
-
                     if len(yearcandidates) > 0:
                         # print "***** length of yearcnadidates is " + str(len(yearcandidates))
                         year2use = str(max(yearcandidates))
@@ -804,6 +815,22 @@ try:
         # reorganize data structure
         (dict7575,dict7575_s) = reorgByYear(maps7575)  #{1975: geopdf.pdf, 1973: ...}
         (dict1515,dict1515_s) = reorgByYear(maps1515)
+        print(dict7575)
+        print(dict1515)
+
+        # -----------------------------------------------------------------------------------------------------------
+        # UNCOMMENT TO REMOVE BLANK MAPS
+        yeardel7575 = []
+        yeardel1515 = []
+        if yeardel7575:
+            for y in yeardel7575:
+                del dict7575[y]
+                del dict7575_s[y]
+        if yeardel1515:
+            for y in yeardel1515:
+                del dict1515[y]
+                del dict1515_s[y]
+        # -----------------------------------------------------------------------------------------------------------
 
     # step 2:  create summary page
         mxdSummary = arcpy.mapping.MapDocument(Summarymxdfile)
@@ -904,7 +931,6 @@ try:
             srWGS84 = arcpy.SpatialReference(4326)   #WGS84
             metadata = []
 
-            srGoogle = arcpy.SpatialReference(3857)   #web mercator
             arcpy.AddMessage("Viewer is needed. Need to copy data to obi002")
             viewerdir = os.path.join(scratch,OrderNumText+'_topo')
             if not os.path.exists(viewerdir):
@@ -914,129 +940,95 @@ try:
                 os.mkdir(tempdir)
             # need to reorganize deliver directory
 
-            dirs = filter(os.path.isdir, glob.glob(os.path.join(scratch,deliverfolder)+'\*_7.5_*'))
-            if len(dirs) > 0:
-                if not os.path.exists(os.path.join(viewerdir,"75")):
-                    os.mkdir(os.path.join(viewerdir,"75"))
+            if not os.path.exists(os.path.join(viewerdir,"75")):
+                os.mkdir(os.path.join(viewerdir,"75"))
+            if not os.path.exists(os.path.join(viewerdir,"150")):
+                os.mkdir(os.path.join(viewerdir,"150"))
+
+            for year in dict7575.keys():
                 # get the extent to use. use one uniform for now
-                year = dirs[0].split('_7.5_')[0][-4:]
                 mxdname = '7.5_'+year+'.mxd'
                 mxd = arcpy.mapping.MapDocument(os.path.join(scratch,mxdname))
                 df = arcpy.mapping.ListDataFrames(mxd,"*")[0]    # the spatial reference here is UTM zone #, need to change to WGS84 Web Mercator
                 df.spatialReference = srGoogle
-                extent = df.extent
+    
+                for lyr in [x for x in arcpy.mapping.ListLayers(mxd, "", df) if x.name in ["Project Property","Buffer Outline", "Grid"]]:
+                    lyr.visible = False
 
-                del df, mxd
-                XMAX = extent.XMax
-                XMIN = extent.XMin
-                YMAX = extent.YMax
-                YMIN = extent.YMin
-                pnt1 = arcpy.Point(XMIN, YMIN)
-                pnt2 = arcpy.Point(XMIN, YMAX)
-                pnt3 = arcpy.Point(XMAX, YMAX)
-                pnt4 = arcpy.Point(XMAX, YMIN)
-                array = arcpy.Array()
-                array.add(pnt1)
-                array.add(pnt2)
-                array.add(pnt3)
-                array.add(pnt4)
-                array.add(pnt1)
-                polygon = arcpy.Polygon(array)
-                arcpy.CopyFeatures_management(polygon, os.path.join(tempdir, "Extent75.shp"))
-                arcpy.DefineProjection_management(os.path.join(tempdir, "Extent75.shp"), srGoogle)
+                if needtif == True:
+                    df.extent = arcpy.mapping.ListLayers(mxd, "Buffer Outline", df)[0].getSelectedExtent(True)
+                    df.scale = df.scale * 1.1                               # need to add 10% buffer or ordergeometry might touch dataframe boundary.            
+                else:
+                    df.scale = 24000
 
-                arcpy.Project_management(os.path.join(tempdir, "Extent75.shp"), os.path.join(tempdir,"Extent75_WGS84.shp"), srWGS84)
-                desc = arcpy.Describe(os.path.join(tempdir, "Extent75_WGS84.shp"))
-                lat_sw = desc.extent.YMin
-                long_sw = desc.extent.XMin
-                lat_ne = desc.extent.YMax
-                long_ne = desc.extent.XMax
-                # clip_envelope = str(extent75.XMin) + " " + str(extent75.YMin) + " " + str(extent75.XMax) + " " + str(extent75.YMax)
-            # arcpy.env.compression = "JPEG 85"
+                imagename = str(year)+".jpg"
+                imagepath = os.path.join(viewerdir, "75", imagename)
+                arcpy.mapping.ExportToJPEG(mxd, imagepath, df, df_export_width=3573, df_export_height=4000, color_mode='24-BIT_TRUE_COLOR', world_file = True, jpeg_quality=50)
 
-            arcpy.env.outputCoordinateSystem = srGoogle
-            # arcpy.env.extent = extent
-            for dir in dirs:
+                desc = arcpy.Describe(imagepath)
+                featbound = arcpy.Polygon(arcpy.Array([desc.extent.lowerLeft, desc.extent.lowerRight, desc.extent.upperRight, desc.extent.upperLeft]), srGoogle)                            
+
+                tempfeat = os.path.join(tempdir, "tilebnd_"+str(year)+".shp")
+                arcpy.Project_management(featbound, tempfeat, srWGS84, None, srGoogle)  # function requires output not be in_memory
+                desc = arcpy.Describe(tempfeat)
+
                 metaitem = {}
 
-                year = dir.split('_7.5_')[0][-4:]
-                # clip and then mosaick the tifs to a jpg
-                # arcpy.env.workspace = tempdir
-                n = 0
-                jpgdir = os.path.join(tempdir,"75_"+year)
-                if not os.path.exists(jpgdir):
-                    os.mkdir(jpgdir)
-
-                for tif in filter(os.path.isfile, glob.glob(dir+'\*.tif')):
-                    try:
-                        arcpy.Clip_management(tif,"",os.path.join(jpgdir, "tempClip"+str(n)+".jpg"),os.path.join(tempdir, "Extent75.shp"),"255","ClippingGeometry")   #this will create proper transparency for no data area
-                        # arcpy.Clip_management(tif,"",os.path.join(jpgdir, "tempClip"+str(n)+".jpg"),os.path.join(tempdir, "Extent75.shp"),"","ClippingGeometry")
-                        n = n + 1
-                    except Exception as e:
-                        print (str(e) + tif)
-                print ("year " + str(year) + ", n = " + str(n))
-                print ("images to mosaick: ")
-                print (filter(os.path.isfile,glob.glob(jpgdir+"\*.jpg")))
-                arcpy.MosaicToNewRaster_management(filter(os.path.isfile,glob.glob(jpgdir+"\*.jpg")), os.path.join(viewerdir,"75"),year+".jpg",srGoogle,"","","3","MINIMUM","MATCH")
-                arcpy.MosaicToNewRaster_management(filter(os.path.isfile,glob.glob(jpgdir+"\*.jpg")), os.path.join(viewerdir,"75"),year+"-84.jpg",srWGS84,"","","3","MINIMUM","MATCH")
                 metaitem['type'] = 'topo75'
                 metaitem['imagename'] = year+'.jpg'
-                desc = arcpy.Describe(os.path.join(viewerdir, "75", year+'-84.jpg'))
                 metaitem['lat_sw'] = desc.extent.YMin
                 metaitem['long_sw'] = desc.extent.XMin
                 metaitem['lat_ne'] = desc.extent.YMax
                 metaitem['long_ne'] = desc.extent.XMax
 
-                os.remove(os.path.join(viewerdir,"75",year+"-84.jpg"))
+                del desc
+                del featbound
                 metadata.append(metaitem)
-            arcpy.env.outputCoordinateSystem = None
-            # arcpy.env.extent = None
+                arcpy.env.outputCoordinateSystem = None
 
-            dirs = filter(os.path.isdir, glob.glob(os.path.join(scratch,deliverfolder)+'\*_15_*'))
-            if len(dirs) > 0:
-                if not os.path.exists(os.path.join(viewerdir,"150")):
-                    os.mkdir(os.path.join(viewerdir,"150"))
+            for year in dict1515.keys():
                 # get the extent to use. use one uniform for now
-            # arcpy.env.compression = "JPEG 85"
-            arcpy.env.outputCoordinateSystem = srGoogle
-            # arcpy.env.extent = extent
-            for dir in dirs:
-                metaitem  ={}
-                year = dir.split('_15_')[0][-4:]
-                # clip and then mosaick the tifs to a jpg
-                # arcpy.env.workspace = os.path.join(os.path.join(viewerdir,"150"))
-                # arcpy.env.workspace = tempdir
-                jpgdir = os.path.join(tempdir,"150_"+year)
-                if not os.path.exists(jpgdir):
-                    os.mkdir(jpgdir)
+                mxdname = '15_'+year+'.mxd'
+                mxd = arcpy.mapping.MapDocument(os.path.join(scratch,mxdname))
+                df = arcpy.mapping.ListDataFrames(mxd,"*")[0]    # the spatial reference here is UTM zone #, need to change to WGS84 Web Mercator
+                df.spatialReference = srGoogle
+    
+                for lyr in [x for x in arcpy.mapping.ListLayers(mxd, "", df) if x.name in ["Project Property","Buffer Outline", "Grid"]]:
+                    lyr.visible = False
 
-                n = 0
-                for tif in filter(os.path.isfile, glob.glob(dir+'\*.tif')):
-                    try:
-                        # note; use the same Extent75 for clipping
-                        arcpy.Clip_management(tif,"",os.path.join(jpgdir,"tempClip"+str(n)+".jpg"),os.path.join(tempdir, "Extent75.shp"),"255","ClippingGeometry")    # this will produce proper transparency for no data area
-                        # arcpy.Clip_management(tif,"",os.path.join(jpgdir,"tempClip"+str(n)+".jpg"),os.path.join(tempdir, "Extent75.shp"),"","ClippingGeometry")    # this doesn't fill outside nodata area, and this results in black stripes between images
-                        n = n + 1
-                    except Exception as e:
-                        print (str(e))
-                print ("year " + str(year) + ", n = " + str(n))
-                print ("images to mosaick: ")
-                print (filter(os.path.isfile,glob.glob(jpgdir+"\*.jpg")))
-                arcpy.MosaicToNewRaster_management(filter(os.path.isfile,glob.glob(jpgdir+"\*.jpg")), os.path.join(viewerdir,"150"),year+".jpg",srGoogle,"","","3","MINIMUM","MATCH")
-                arcpy.MosaicToNewRaster_management(filter(os.path.isfile,glob.glob(jpgdir+"\*.jpg")), os.path.join(viewerdir,"150"),year+"-84.jpg",srWGS84,"","","3","MINIMUM","MATCH")
-                metaitem['type'] = 'topo150'
+                if needtif == True:
+                    df.extent = arcpy.mapping.ListLayers(mxd, "Buffer Outline", df)[0].getSelectedExtent(True)
+                    df.scale = df.scale * 1.1                               # need to add 10% buffer or ordergeometry might touch dataframe boundary.            
+                else:
+                    df.scale = 24000
+
+                imagename = str(year)+".jpg"
+                imagepath = os.path.join(viewerdir, "75", imagename)
+                arcpy.mapping.ExportToJPEG(mxd, imagepath, df, df_export_width=3573, df_export_height=4000, color_mode='24-BIT_TRUE_COLOR', world_file = True, jpeg_quality=50)
+
+                desc = arcpy.Describe(imagepath)
+                featbound = arcpy.Polygon(arcpy.Array([desc.extent.lowerLeft, desc.extent.lowerRight, desc.extent.upperRight, desc.extent.upperLeft]), srGoogle)                            
+
+                tempfeat = os.path.join(tempdir, "tilebnd_"+str(year)+".shp")
+                arcpy.Project_management(featbound, tempfeat, srWGS84, None, srGoogle)  # function requires output not be in_memory
+                desc = arcpy.Describe(tempfeat)
+
+                metaitem = {}
+
+                metaitem['type'] = 'topo75'
                 metaitem['imagename'] = year+'.jpg'
-                desc = arcpy.Describe(os.path.join(viewerdir, "150", year+'-84.jpg'))
                 metaitem['lat_sw'] = desc.extent.YMin
                 metaitem['long_sw'] = desc.extent.XMin
                 metaitem['lat_ne'] = desc.extent.YMax
                 metaitem['long_ne'] = desc.extent.XMax
 
-                os.remove(os.path.join(viewerdir,"150",year+"-84.jpg"))
+                del desc
+                del featbound
                 metadata.append(metaitem)
-            arcpy.env.outputCoordinateSystem = None
-            # arcpy.env.extent = None
+                arcpy.env.outputCoordinateSystem = None
 
+
+            # arcpy.env.extent = None
             # write corner coordinates to Oracle
 
             if os.path.exists(os.path.join(viewer_path, OrderNumText+"_topo")):
@@ -1079,11 +1071,9 @@ except:
         con = cx_Oracle.connect(connectionString)
         cur = con.cursor()
         cur.callproc('eris_topo.InsertTopoAudit', (OrderIDText, 'python-Error Handling',pymsg))
-
     finally:
         cur.close()
         con.close()
-
     raise       # raise the error again
 
 print ("Final TOPO report directory: " + (os.path.join(reportcheckFolder, "TopographicMaps", OrderNumText + "_US_Topo.docx")))
