@@ -209,15 +209,15 @@ def createWORD(seriesText,diction, diction_s,app):
             else:
                 topofile = topolyrfile_none
             mscale = int(diction[year][0].split('_')[-2])   # assumption: WI_Ashland East_500066_1964_24000_geo.pdf, and all pdfs from the same year are of the same scale
-
+            print ("mscale is " + str(mscale))
         else:
             tifdir = tifdir_c
             if len(years) > 1:
                 topofile = topolyrfile_w
             else:
                 topofile = topolyrfile_none
-            mscale = 24000
-        print ("mscale is " + str(mscale))
+        mscale = 24000
+        
 
         for lyr in arcpy.mapping.ListLayers(mxd, "", df):
             if lyr.name == "Project Property":
@@ -227,10 +227,10 @@ def createWORD(seriesText,diction, diction_s,app):
                     lyr.visible = True
                 df.extent = lyr.getSelectedExtent(False)
                 df.scale = df.scale * 1.1
-                print(df.scale)
+                # print(df.scale)
 
         if df.scale < mscale:
-            scale = mscale
+            df.scale = mscale
         else:
             # if df.scale > 2 * mscale:  # 2 is an empirical number
             if df.scale > 1.5 * mscale:
@@ -238,8 +238,6 @@ def createWORD(seriesText,diction, diction_s,app):
                 print("***** big scale")
             else:
                 print("scale is slightly bigger than the original map scale, use the standard topo map scale.")
-            
-        print(df.scale)
 
         # use uniform presentation scale for all maps
         # df.scale = 24000
@@ -310,7 +308,7 @@ def createWORD(seriesText,diction, diction_s,app):
         arcpy.RefreshTOC()
         arcpy.RefreshActiveView()
         outputjpg = os.path.join(scratch, "map_"+seriesText+"_"+year+".jpg")
-        print (seriesText + '_'+year)
+        # print (seriesText + '_'+year)
         if int(year)<2008:
             arcpy.mapping.ExportToJPEG(mxd, outputjpg, "PAGE_LAYOUT", 480, 640, 125, "False", "24-BIT_TRUE_COLOR", 90)    #note: because of exporting PAGE_LAYOUT, the wideth and height parameters are ignored.
         else:
@@ -338,7 +336,7 @@ def createWORD(seriesText,diction, diction_s,app):
 
         fileName = OrderNumText
         fileDate = time.strftime('%Y-%m-%d', time.localtime())
-        print ("quandrangles are " + quadrangles)
+        # print ("quandrangles are " + quadrangles)
         quads = 'TOPOGRAPHIC MAP IMAGE COURTESY OF THE U.S. GEOLOGICAL SURVEY\rQUADRANGLES INCLUDE: ' + quadrangles + ' (' + seriesText +' Min Series, '+ str(year) + ').'
 
         allShapes = doc.Shapes
@@ -782,7 +780,7 @@ try:
                     if year2use[0:2] != "20":
                         print ("################### Error in the year of the map!!")
 
-                    print (row[9] + " " + row[5] + "  " + row[15] + "  " + year2use)
+                    # print (row[9] + " " + row[5] + "  " + row[15] + "  " + year2use)
                     infomatrix.append([row[9],row[5],row[15],year2use])
 
         logger.debug("#3")
@@ -815,8 +813,8 @@ try:
         # reorganize data structure
         (dict7575,dict7575_s) = reorgByYear(maps7575)  #{1975: geopdf.pdf, 1973: ...}
         (dict1515,dict1515_s) = reorgByYear(maps1515)
-        print(dict7575)
-        print(dict1515)
+        print(dict7575.keys())
+        print(dict1515.keys())
 
         # -----------------------------------------------------------------------------------------------------------
         # UNCOMMENT TO REMOVE BLANK MAPS
@@ -940,12 +938,10 @@ try:
                 os.mkdir(tempdir)
             # need to reorganize deliver directory
 
-            if not os.path.exists(os.path.join(viewerdir,"75")):
-                os.mkdir(os.path.join(viewerdir,"75"))
-            if not os.path.exists(os.path.join(viewerdir,"150")):
-                os.mkdir(os.path.join(viewerdir,"150"))
-
             for year in dict7575.keys():
+                if not os.path.exists(os.path.join(viewerdir,"75")):
+                    os.mkdir(os.path.join(viewerdir,"75"))
+
                 # get the extent to use. use one uniform for now
                 mxdname = '7.5_'+year+'.mxd'
                 mxd = arcpy.mapping.MapDocument(os.path.join(scratch,mxdname))
@@ -956,7 +952,7 @@ try:
                     lyr.visible = False
 
                 if needtif == True:
-                    df.extent = arcpy.mapping.ListLayers(mxd, "Buffer Outline", df)[0].getSelectedExtent(True)
+                    df.extent = arcpy.mapping.ListLayers(mxd, "Project Property", df)[0].getSelectedExtent(True)
                     df.scale = df.scale * 1.1                               # need to add 10% buffer or ordergeometry might touch dataframe boundary.            
                 else:
                     df.scale = 24000
@@ -975,7 +971,7 @@ try:
                 metaitem = {}
 
                 metaitem['type'] = 'topo75'
-                metaitem['imagename'] = year+'.jpg'
+                metaitem['imagename'] = imagename
                 metaitem['lat_sw'] = desc.extent.YMin
                 metaitem['long_sw'] = desc.extent.XMin
                 metaitem['lat_ne'] = desc.extent.YMax
@@ -987,6 +983,9 @@ try:
                 arcpy.env.outputCoordinateSystem = None
 
             for year in dict1515.keys():
+                if not os.path.exists(os.path.join(viewerdir,"150")):
+                    os.mkdir(os.path.join(viewerdir,"150"))
+                
                 # get the extent to use. use one uniform for now
                 mxdname = '15_'+year+'.mxd'
                 mxd = arcpy.mapping.MapDocument(os.path.join(scratch,mxdname))
@@ -997,13 +996,13 @@ try:
                     lyr.visible = False
 
                 if needtif == True:
-                    df.extent = arcpy.mapping.ListLayers(mxd, "Buffer Outline", df)[0].getSelectedExtent(True)
+                    df.extent = arcpy.mapping.ListLayers(mxd, "Project Property", df)[0].getSelectedExtent(True)
                     df.scale = df.scale * 1.1                               # need to add 10% buffer or ordergeometry might touch dataframe boundary.            
                 else:
                     df.scale = 24000
 
                 imagename = str(year)+".jpg"
-                imagepath = os.path.join(viewerdir, "75", imagename)
+                imagepath = os.path.join(viewerdir, "150", imagename)
                 arcpy.mapping.ExportToJPEG(mxd, imagepath, df, df_export_width=3573, df_export_height=4000, color_mode='24-BIT_TRUE_COLOR', world_file = True, jpeg_quality=50)
 
                 desc = arcpy.Describe(imagepath)
@@ -1015,8 +1014,8 @@ try:
 
                 metaitem = {}
 
-                metaitem['type'] = 'topo75'
-                metaitem['imagename'] = year+'.jpg'
+                metaitem['type'] = 'topo150'
+                metaitem['imagename'] = imagename
                 metaitem['lat_sw'] = desc.extent.YMin
                 metaitem['long_sw'] = desc.extent.XMin
                 metaitem['lat_ne'] = desc.extent.YMax
@@ -1030,30 +1029,30 @@ try:
 
             # arcpy.env.extent = None
             # write corner coordinates to Oracle
-
             if os.path.exists(os.path.join(viewer_path, OrderNumText+"_topo")):
                 shutil.rmtree(os.path.join(viewer_path, OrderNumText+"_topo"))
             shutil.copytree(os.path.join(scratch, OrderNumText+"_topo"), os.path.join(viewer_path, OrderNumText+"_topo"))
             url = upload_link+"TopoUpload?ordernumber=" + OrderNumText
             urllib.urlopen(url)
 
-        else:
-            arcpy.AddMessage("No viewer is needed. Do nothing")
+            try:
+                con = cx_Oracle.connect(connectionString)
+                cur = con.cursor()
 
-        try:
-            con = cx_Oracle.connect(connectionString)
-            cur = con.cursor()
+                cur.execute("delete from overlay_image_info where  order_id = %s and (type = 'topo75' or type = 'topo150')" % str(OrderIDText))
 
-            cur.execute("delete from overlay_image_info where  order_id = %s and (type = 'topo75' or type = 'topo150')" % str(OrderIDText))
-
-            if needViewer == 'Y':
                 for item in metadata:
                     cur.execute("insert into overlay_image_info values (%s, %s, %s, %.5f, %.5f, %.5f, %.5f, %s, '', '')" % (str(OrderIDText), str(OrderNumText), "'" + item['type']+"'", item['lat_sw'], item['long_sw'], item['lat_ne'], item['long_ne'],"'"+item['imagename']+"'" ) )
                 con.commit()
 
-        finally:
-            cur.close()
-            con.close()
+            finally:
+                cur.close()
+                con.close()
+
+        else:
+            arcpy.AddMessage("No viewer is needed. Do nothing")
+
+
 
         shutil.copy(os.path.join(scratch,docreport), os.path.join(reportcheckFolder, "TopographicMaps"))  # occasionally get permission denied issue here when running locally
 
