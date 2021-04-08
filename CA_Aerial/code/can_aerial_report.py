@@ -595,15 +595,17 @@ if __name__ == '__main__':
             layerlist = []
 
             # SPLIT DECADE -------------------
-            print(imageMeta)
-            for k, v in imageMeta.items():
-                if k == 1980: #len(v) > 1:
-                    yrlist =  [x[2] for x in v]
-                    for y in v:
-                        imageMeta[y[2]] = [y]
-                    if k not in yrlist:
-                        del imageMeta[k]
-            print(imageMeta)
+            splityears = []
+            if splityears:
+                splitlist = [imageMeta.get(key) for key in splityears][0]
+                for y in splityears:
+                    del imageMeta[y]
+
+                for item in splitlist:
+                    if item[2] not in imageMeta.keys():
+                        imageMeta[item[2]] = [item]
+                    else:
+                        imageMeta[item[2]].append(item)
             # --------------------------------
 
             for decade in sorted(imageMeta.keys()):
