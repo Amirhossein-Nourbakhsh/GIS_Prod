@@ -546,7 +546,7 @@ try:
         shutil.copytree(summaryTemplate,os.path.join(scratch,'tozip_summary'))
 
     coverPage = goCoverPage(coverInfotext)
-    shutil.copyfile(coverPage, os.path.join(zipCover,"word\media\image1.emf"))
+    shutil.copyfile(coverPage, os.path.join(zipCover,"word\media\image2.emf"))
     zipdir_noroot(zipCover,"cover.docx")
     shutil.copyfile(summaryEmf, os.path.join(zipSummary,"word\media\image2.emf"))
     zipdir_noroot(zipSummary,"summary.docx")
