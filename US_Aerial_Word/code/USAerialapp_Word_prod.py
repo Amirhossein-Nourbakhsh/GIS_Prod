@@ -234,6 +234,17 @@ def zipdir_noroot(path, zipfilename):
             myZipFile.write(os.path.join(root, afile), arcname)
     myZipFile.close()
 
+def get_sourcename(source_acronym):
+    try:
+        con = cx_Oracle.connect(connectionString)
+        cur = con.cursor()
+
+        cur.execute("select fullname from aerial_source where source = '%s'"%(source_acronym))
+        t = cur.fetchone()
+        source_fullname = str(t[0])
+        return source_fullname
+    except Exception as e:
+        print e.message
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -516,7 +527,7 @@ try:
         j=j+1
         i=str(j)
         year = item[1]
-        source = item[2]
+        source = get_sourcename(item[2])
         if item[3] == 6000:
             scale = '1":' + str(item[3]/12)+"'"
         else:

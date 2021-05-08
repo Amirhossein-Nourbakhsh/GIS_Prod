@@ -164,7 +164,7 @@ if __name__ == '__main__':
     arcpy.env.overwriteOutput = True
     arcpy.CreateFileGDB_management(scratch, 'temp.gdb')
     arcpy.env.workspace = os.path.join(scratch,'temp.gdb')
-    job_directory = r'\\192.168.136.164\v2_usaerial\JobData\test'
+    job_directory = r'\\192.168.136.164\v2_usaerial\JobData\prod'
     georeferenced_historical = r'\\cabcvan1nas003\historical\Georeferenced_Aerial'
     georeferenced_doqq = r'\\cabcvan1nas003\doqq\Georeferenced_DOQQ'
     mxdexport_template = r'\\cabcvan1gis007\gptools\Aerial_US\mxd\Aerial_US_Export.mxd'
@@ -201,8 +201,8 @@ if __name__ == '__main__':
                 if imagecollection == 'DOQQ':
                     sr = arcpy.Describe(imageuploadpath).spatialReference
                     mosaicfp = os.path.join(scratch,'image_boundary.shp')
-                    arcpy.CreateMosaicDataset_management(os.path.join(scratch,'temp.gdb'), 'doqq', 4326)
-                    arcpy.AddRastersToMosaicDataset_management (os.path.join(scratch,'temp.gdb','doqq'), "Raster Dataset", imageuploadpath, 'NO_CELL_SIZES', True, False,spatial_reference = sr)
+                    arcpy.CreateMosaicDataset_management(os.path.join(scratch,'temp.gdb'), 'raster', 4326)
+                    arcpy.AddRastersToMosaicDataset_management (os.path.join(scratch,'temp.gdb','raster'), "Raster Dataset", imageuploadpath, 'NO_CELL_SIZES', True, False,spatial_reference = sr)
                     arcpy.ExportMosaicDatasetGeometry_management(os.path.join(scratch,'temp.gdb','raster'),mosaicfp,"OBJECTID = 1","FOOTPRINT")
                     cellsizeX = arcpy.GetRasterProperties_management(imageuploadpath,'CELLSIZEX')
                     cellsizeY = arcpy.GetRasterProperties_management(imageuploadpath,'CELLSIZEY')
@@ -221,7 +221,7 @@ if __name__ == '__main__':
                     arcpy.AddMessage(result_right)
                     #Rename image and TAB
                     if os.path.exists(TAB_upload_path):
-                        shutil.copy(os.path.join(uploaded_dir,TAB_image_name),os.path.join(georeferenced_doqq,TAB_image_name)) #copy TAB if exists
+                        shutil.copy(os.path.join(TAB_upload_path),os.path.join(georeferenced_doqq,TAB_image_name)) #copy TAB if exists
                     #Copy image to inventory folder/
                     arcpy.Copy_management(originalpath,os.path.join(scratch,job_image_name))
                     if os.path.exists(os.path.join(georeferenced_doqq,job_image_name)):
@@ -230,6 +230,13 @@ if __name__ == '__main__':
                     image_inv_path = os.path.join(georeferenced_doqq,job_image_name)
                 else:
                     sr = arcpy.Describe(imageuploadpath).spatialReference
+                    if sr.name == 'GCS_Unknown':
+                        sr = arcpy.SpatialReference(4326)
+                        arcpy.DefineProjection_management(imageuploadpath,sr)
+                    elif sr.name != 'Unknown':
+                        pass
+                    else:
+                        arcpy.AddError('Unable to read tab properties:'+ sr.name)
                     mosaicfp = os.path.join(scratch,'image_boundary.shp')
                     arcpy.CreateMosaicDataset_management(os.path.join(scratch,'temp.gdb'), 'raster', 4326)
                     arcpy.AddRastersToMosaicDataset_management (os.path.join(scratch,'temp.gdb','raster'), "Raster Dataset", imageuploadpath, 'NO_CELL_SIZES', True, False,spatial_reference = sr)
@@ -251,7 +258,7 @@ if __name__ == '__main__':
                     arcpy.AddMessage(result_right)
                     #Rename image and TAB
                     if os.path.exists(TAB_upload_path):
-                        shutil.copy(os.path.join(uploaded_dir,TAB_image_name),os.path.join(georeferenced_historical,TAB_image_name)) #copy TAB if exists
+                        shutil.copy(TAB_upload_path,os.path.join(georeferenced_historical,TAB_image_name)) #copy TAB if exists
                     #Copy image to inventory folder/
                     arcpy.Copy_management(originalpath,os.path.join(scratch,job_image_name))
                     if os.path.exists(os.path.join(georeferenced_historical,job_image_name)):
@@ -259,7 +266,7 @@ if __name__ == '__main__':
                     arcpy.Copy_management(os.path.join(scratch,job_image_name),os.path.join(georeferenced_historical,job_image_name))
                     image_inv_path = os.path.join(georeferenced_historical,job_image_name)                
                 image_metadata = str({"PROCEDURE":Oracle.erisapi_procedures['passimagedetail'],"ORDER_NUM":OrderNumText,"AUI_ID":str(auid),"SWLAT":str(result_bot),"SWLONG":str(result_left),"NELAT":str(result_top),"NELONG":str(result_right),"SPATIAL_RESOLUTION":str(spatial_res),"ORIGINAL_IMAGE_PATH":str(image_inv_path)})
-                Oracle('test').call_erisapi(image_metadata)
+                Oracle('prod').call_erisapi(image_metadata)
                 new_image_name = str(aerialyear)+'_'+imagesource+'_'+str(auid)+'.'+imagename.split('.')[1]
                 rename_call = str({"PROCEDURE":Oracle.erisapi_procedures['setimagename'],"ORDER_NUM":OrderNumText,"AUI_ID":auid,"IMAGE_NAME":str(new_image_name)})
                 rename_return = Oracle('prod').call_erisapi(rename_call)
