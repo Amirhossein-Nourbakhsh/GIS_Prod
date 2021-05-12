@@ -285,11 +285,9 @@ if __name__ == '__main__':
     start = timeit.default_timer()
     orderID = arcpy.GetParameterAsText(0)#'1058321'#arcpy.GetParameterAsText(0)
     AUI_ID = arcpy.GetParameterAsText(1)#''#arcpy.GetParameterAsText(1)
-    scratch = arcpy.env.scratchFolder#r'C:\Users\JLoucks\Documents\JL\psr2'#arcpy.env.scratchFolder
+    scratch = arcpy.env.scratchFolder
     job_directory = r'\\192.168.136.164\v2_usaerial\JobData\prod'
     mxdexport_template = r'\\cabcvan1gis007\gptools\Aerial_US\mxd\Aerial_US_Export.mxd'
-    conversion_input = r'\\192.168.136.164\v2_usaerial\input'
-    conversion_output = r'\\192.168.136.164\v2_usaerial\output'
     Conversion_URL = r'http://erisservice3.ecologeris.com/ErisInt/USAerialAppService_prod/USAerial.svc/USAerialImagePromote_temp?inputfile='
     MapScale = 6000
 
@@ -427,5 +425,3 @@ if __name__ == '__main__':
                 export_reportimage(image_name,OrderGeometry,image_auid)
         else:
             arcpy.AddError('No Available Image for that AUI ID')
-    #best_images = best_imageperyear(scratch)
-    #print best_images
