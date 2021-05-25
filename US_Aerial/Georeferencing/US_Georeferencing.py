@@ -21,7 +21,8 @@ class ImageBasePath:
 class OutputDirectory:
     job_directory_test = r'\\192.168.136.164\v2_usaerial\JobData\test'
     job_directory_prod = r'\\192.168.136.164\v2_usaerial\JobData\prod'
-    georef_images = r'\\cabcvan1nas003\historical\Georeferenced_Aerial_test'
+    georef_images_test = r'\\cabcvan1nas003\historical\Georeferenced_Aerial_test'
+    georef_images_prod = r'\\cabcvan1nas003\historical\Georeferenced_Aerial'
 class TransformationType():
     POLYORDER0 = "POLYORDER0"
     POLYORDER1 = "POLYORDER1"
@@ -276,7 +277,7 @@ if __name__ == '__main__':
                     bottom = str(arcpy.GetRasterProperties_management(input_image,"BOTTOM").getOutput(0))
                     src_points = "'" + left + " " + bottom + "';" + "'" + right + " " + bottom + "';" + "'" + right + " " + top + "';" + "'" + left + " " + top + "'"
                     ### Georeferencing
-                    img_georeferenced = apply_georeferencing(input_image, src_points, gcp_points,OutputDirectory.georef_images, out_img_name, '', ResamplingType.BILINEAR)
+                    img_georeferenced = apply_georeferencing(input_image, src_points, gcp_points,OutputDirectory.georef_images_prod, out_img_name, '', ResamplingType.BILINEAR)
                     ### ExportToOutputs
                     export_to_outputs(env,img_georeferenced, jpg_image_folder,out_img_name,order_geometry)
                     
