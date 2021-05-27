@@ -179,7 +179,7 @@ def getclipflag(collectiontype,mxd,df,geo_extent,jpg_image):
             return ['N',clip_size]
     else:
         clip_size = os.path.getsize(os.path.join(jpg_image_folder,jpg_image))
-        if clip_size <= 2000000:
+        if clip_size <= 1400000:
             return ['Y',clip_size]
         else:
             return ['N',clip_size]
@@ -206,19 +206,23 @@ def export_reportimage(imagepath,ordergeometry,auid):
         geo_extent = geometry_layer.getExtent()
         df.extent = geo_extent
         if image_collection == 'DOQQ':
-                if df.scale > 25000:
+                if int(image_year) in list(range(1990,2006)):
+                    df.scale = 62500*1.3 #multiply by 30% to compensate for inaccurate scaling on web mercator projection. 62500 is the scale for 1 quadrangle
+                    w_res = 5100
+                    h_res = 6600
+                elif df.scale > 62500:
                     df.extent = geo_extent
                     df.scale = df.scale * 1.0
                     try:
-                        w_res = 7140
+                        w_res = 2550
                         h_res= int((geo_extent.height/geo_extent.width)*w_res)
                     except ZeroDivisionError:
-                        w_res = 5100
-                        h_res = 6600
+                        w_res = 2550
+                        h_res = 3300
                 else:
                     df.scale = 25000
-                    w_res = 5100
-                    h_res = 6600
+                    w_res = 2550
+                    h_res = 3300
         elif image_collection != 'DOQQ':
             df.extent = image_extent
             df.scale = ((df.scale/100))*85 #very important setting as it defines how much of the image will be displayed to FE

@@ -158,10 +158,7 @@ def set_raster_background(input_raster,remove_color):
             arcpy.SetRasterProperties_management(input_raster ,nodata= str(i+1) + ' 255')
     elif remove_color == 'both':
         for i in range(desc.bandCount):
-            vt = arcpy.ValueTable(2)
-            vt.addRow(str(i+1) + ' 255')
-            vt.addRow(str(i+1) + ' 0')
-            arcpy.SetRasterProperties_management(input_raster ,nodata=vt)
+            arcpy.SetRasterProperties_management(input_raster ,nodata= str(i+1) + ' 255;'+ str(i+1) + ' 0')
 def createGeometry(pntCoords,geometry_type,output_folder,output_name, spatialRef = arcpy.SpatialReference(4326)):
     outputSHP = os.path.join(output_folder,output_name)
     if geometry_type.lower()== 'point':
@@ -192,6 +189,11 @@ def set_imagedetail(extent,centerlat,centerlong,fin_image_name):
             raise OracleBadReturn
     except OracleBadReturn:
         arcpy.AddError('status: '+message_return[3]+' - '+message_return[2])
+def get_shapefile(shape_path,out_path):
+    if os.path.exists(shape_path):
+        arcpy.Copy_management(shape_path,out_path)
+    else:
+        pass
 def export_reportimage(imagedict,ordergeometry,image_comment):
     arcpy.AddMessage("Adding to template: "+str(imagedict))
     mxd = arcpy.mapping.MapDocument(mxdexport_template)
@@ -287,7 +289,7 @@ def export_geotiff(imagedict,ordergeometry,image_comment):
         arcpy.MakeRasterLayer_management(imagepath,lyrpath)
         image_lyr = arcpy.mapping.Layer(lyrpath)
         arcpy.mapping.AddLayer(df,image_lyr,'TOP')
-    sr = arcpy.SpatialReference(4326)
+    sr = arcpy.GetUTMFromLocation(centroidX,centroidY)
     df.spatialReference = sr
     geometry_layer = arcpy.mapping.ListLayers(mxd,'OrderGeometry',df)[0]
     geometry_layer.visible = False
@@ -454,6 +456,7 @@ if __name__ == '__main__':
     ##get image matrix and export
     if ImageType == 'frames':
         BufferGeometry = create_clipbuffer(OrderGeometry)
+        get_shapefile(OrderGeometry,os.path.join(job_fin,OrderNumText+'.shp'))
         export_frame(selected_list_json['RESULTS'],OrderGeometry,BufferGeometry)
     else:
         for image_year in selected_list_json['RESULTS'].keys():
@@ -472,6 +475,7 @@ if __name__ == '__main__':
             if ImageType == 'pdf':
                 export_reportimage(getimage_dict,OrderGeometry,image_comment)
             elif ImageType == 'geotiff':
+                get_shapefile(OrderGeometry,os.path.join(job_fin,OrderNumText+'.shp'))
                 export_geotiff(getimage_dict,OrderGeometry,image_comment)
 
 
