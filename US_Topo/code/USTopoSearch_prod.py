@@ -655,11 +655,11 @@ logger.addHandler(handler)
 # scratch = arcpy.env.scratchWorkspace#r"C:\Users\JLoucks\Documents\JL\Topo_USA_scratch8"#
 
 OrderIDText = ""
-OrderNumText = r"20292500158"
+OrderNumText = r"21052600036"
 BufsizeText = "2.4"
 yesBoundary = ""
-scratch = os.path.join(r"W:\Data Analysts\Alison\_GIS\TOPO_SCRATCHY", OrderNumText)
-
+scratch = arcpy.env.scratchFolder
+print(scratch)
 # Deployment parameters
 server_environment = 'prod'
 server_config_file = r"\\cabcvan1gis007\gptools\ERISServerConfig.ini"
