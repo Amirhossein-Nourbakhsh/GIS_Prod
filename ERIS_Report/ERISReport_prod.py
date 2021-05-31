@@ -61,7 +61,7 @@ class Machine:
 
 class Credential:
     oracle_test = r"eris_gis/gis295@GMTESTC.glaciermedia.inc"
-    oracle_production = r'eris_gis/gis295@GMPRODC.glaciermedia.inc"
+    oracle_production = r'eris_gis/gis295@cabcvan1ora003.glaciermedia.inc:1521/GMPRODC'#'eris_gis/gis295@GMPRODC.glaciermedia.inc"
 
 class ReportPath:
     noninstant_reports_test = server_config['noninstant']
@@ -296,7 +296,6 @@ def createBuffers(orderBuffers,output_folder,buffer_name=r"buffer_%s.shp"):
     for i in range(len(orderBuffers)):
         buffer_dict[i]=createGeometry(eval(orderBuffers[i].values()[0])[0],"polygon",output_folder,buffer_name%i)
         buffer_sizes_dict[i] =float(orderBuffers[i].keys()[0])
-    print(buffer_dict,buffer_sizes_dict)
     return [buffer_dict,buffer_sizes_dict]
 
 def createGeometry(pntCoords,geometry_type,output_folder,output_name, spatialRef = arcpy.SpatialReference(4269)):
@@ -319,11 +318,47 @@ def createGeometry(pntCoords,geometry_type,output_folder,output_name, spatialRef
 def addERISpoint(pointInfo,mxd,output_folder,out_points=r'points.shp'):
     out_pointsSHP = os.path.join(output_folder,out_points)
     erisPointsLayer = config.LAYER.erisPoints
-    #erisIDs_4points = dict((_.get('DATASOURCE_POINTS')[0].get('ERIS_DATA_ID'),[('m%sc'%(_.get("MAP_KEY_LOC"))) if _.get("MAP_KEY_NO_TOT")==1 else ('m%sc(%s)'%(_.get("MAP_KEY_LOC"), _.get("MAP_KEY_NO_TOT"))) ,float('%s'%(1 if round(_.get("ELEVATION_DIFF"),2)>0.0 else 0 if round(_.get("ELEVATION_DIFF"),2)==0.0 else -1 if round(_.get("ELEVATION_DIFF"),2)<0.0 else 100))]) for _ in pointInfo)
-    erisIDs_4points = dict((_.get('DATASOURCE_POINTS')[0].get('ERIS_DATA_ID'),[('m%sc'%(_.get("MAP_KEY_LOC"))) if _.get("MAP_KEY_NO_TOT")==1 else ('m%sc(%s)'%(_.get("MAP_KEY_LOC"), _.get("MAP_KEY_NO_TOT"))) ,float('%s'%(1 if _.get("ELEVATION_DIFF")>0.0 else 0 if _.get("ELEVATION_DIFF")==0.0 else -1 if _.get("ELEVATION_DIFF")<0.0 else 100))]) for _ in pointInfo)
-    erispoints = dict((int(_.get('DATASOURCE_POINTS')[0].get('ERIS_DATA_ID')),(_.get("X"),_.get("Y"))) for _ in pointInfo)
+    erisIDs_4points = {}  
+    erispoints = {}    
+    j = 0 # disassembled from below line erisIDs_4points
+    data_source_point_exist = True
+    for i in pointInfo:
+        print("------------------------------")
+        print(j)
+        j += 1
+        if len(i['DATASOURCE_POINTS']) == 0:
+            data_source_point_exist = False
+        for k, v in i.items():
+            # erisid = ""
+
+            if k == "MAP_KEY_NO_TOT" and v == 1:
+                mapkey = 'm%sc'%(i["MAP_KEY_LOC"])
+            else:
+                mapkey = 'm%sc(%s)'%(i["MAP_KEY_LOC"], i["MAP_KEY_NO_TOT"])
+                if not v == None:
+                    if k == "ELEVATION_DIFF" and round(float(v),2) > 0.0:
+                        elev = float(1)
+                    elif k == "ELEVATION_DIFF" and float(round(v,2)) == 0.0:
+                        elev = float(0)
+                    elif k == "ELEVATION_DIFF" and float(round(v,2)) < 0.0:
+                        elev = float(-1)
+                    else:
+                        elev = float(100)
+                else: 
+                    elev = float(100)
+            # float('%s'%(1 if round(_.get("ELEVATION_DIFF"),2)>0.0 else 0 if round(_.get("ELEVATION_DIFF"),2)==0.0 else -1 if round(_.get("ELEVATION_DIFF"),2)<0.0 else 100)
+
+            if k == "DATASOURCE_POINTS":
+                for erisdataids in v:
+                    erisid = erisdataids["ERIS_DATA_ID"]
+                    erisIDs_4points[erisid] = [mapkey, elev]
+    print(erisIDs_4points)
+
+    # erisIDs_4points = dict((_.get('DATASOURCE_POINTS')[0].get('ERIS_DATA_ID'),[('m%sc'%(_.get("MAP_KEY_LOC"))) if _.get("MAP_KEY_NO_TOT")==1 else ('m%sc(%s)'%(_.get("MAP_KEY_LOC"), _.get("MAP_KEY_NO_TOT"))) ,float('%s'%(1 if round(_.get("ELEVATION_DIFF"),2)>0.0 else 0 if round(_.get("ELEVATION_DIFF"),2)==0.0 else -1 if round(_.get("ELEVATION_DIFF"),2)<0.0 else 100))]) for _ in pointInfo)
+    if data_source_point_exist:
+        erispoints = dict((int(_.get('DATASOURCE_POINTS')[0].get('ERIS_DATA_ID')),(_.get("X"),_.get("Y"))) for _ in pointInfo)
     # print(erisIDs_4points)
-    if erisIDs_4points != {}:
+    if erisIDs_4points != {} and erispoints != {}:
         arcpy.CreateFeatureclass_management(output_folder, out_points, "MULTIPOINT", "", "DISABLED", "DISABLED", arcpy.SpatialReference(4269))
         check_field = arcpy.ListFields(out_pointsSHP,"ERISID")
         if check_field==[]:
@@ -368,6 +403,7 @@ def getMaps(mxd, output_folder,map_name,buffer_dict, buffer_sizes_list,unit_code
     if buffer_name.endswith(".shp"):
         buffer_name = buffer_name[:-4]
     bufferLayer = config.LAYER.buffer
+    print(buffer_dict)
     for i in buffer_dict.keys():
         if buffer_sizes_list[i]>=0.04:
             mxd.addLayer(bufferLayer,output_folder,"buffer_%s"%(i))
@@ -417,13 +453,14 @@ def exportTopo(mxd,output_folder,geometry_name,geometry_type, output_pdf,unit_co
     mxd.df.spatialReference = arcpy.SpatialReference('WGS 1984 UTM Zone %sN'%UTMzone)
     topoYear = '2020'
     if unit_code == 9093:
-        topoLayer = config.LAYER.topowhite    
+        topoLayer = config.LAYER.topowhite
         topolist = getCurrentTopo(config.DATA.data_topo,bufferSHP,output_folder)
-        topoYear = getTopoQuadnYear(topolist)[1]
-        mxd.addTextoMap("Year", "Year: %s"%topoYear)
-        mxd.addTextoMap("Quadrangle","Quadrangle(s): %s"%getTopoQuadnYear(topolist)[0])
-        for topo in topolist:
-            mxd.addLayer(topoLayer,output_folder,topo.split('.')[0],"RASTER_WORKSPACE","BOTTOM")
+        if topolist != None:
+            topoYear = getTopoQuadnYear(topolist)[1]
+            mxd.addTextoMap("Year", "Year: %s"%topoYear)
+            mxd.addTextoMap("Quadrangle","Quadrangle(s): %s"%getTopoQuadnYear(topolist)[0])
+            for topo in topolist:
+                mxd.addLayer(topoLayer,output_folder,topo.split('.')[0],"RASTER_WORKSPACE","BOTTOM")
     elif unit_code == 9049:
         mxd.addTextoMap("Logo", "\xa9 ERIS Information Inc.")
     mxd.toScale(24000) if mxd.df.scale<24000 else mxd.toScale(1.1*mxd.df.scale)
@@ -452,24 +489,25 @@ def getCurrentTopo(masterfile_topo,inputSHP,output_folder): # copy current topo 
             cellids_selected.append(cellid)
         del row
         del rows
-        masterLayer_topo = None        
-        
+        masterLayer_topo = None
+
         for cellid in cellids_selected:
             try:
                 exec("info =  topo_image_path.topo_%s"%(cellid))
                 infomatrix.append(info)
                 print(infomatrix)
-            except  AttributeError as ae:
-                print("AttributeError: No current topo available")
-                print(ae)
+            except  Exception as e:
+# START - NO CURRENT TOPOS, PRINT THE MOST RECENT HTMC AVAILABLE --------------------------------------------------------------------------------------------------------------
+                print("--------------------------------")
+                print("ERROR RAISED IN getCurrentTopo:")
+                print(e)
 
-                newmastertopo = r'\\cabcvan1gis006\GISData\Topo_USA\masterfile\Cell_PolygonAll.shp'                
+                newmastertopo = r'\\cabcvan1gis006\GISData\Topo_USA\masterfile\Cell_PolygonAll.shp'
                 csvfile_h = r'\\cabcvan1gis006\GISData\Topo_USA\masterfile\All_HTMC_all_all_gda_results.csv'
                 global tifdir_topo
                 tifdir_topo = r'\\cabcvan1fpr009\USGS_Topo\USGS_HTMC_Geotiff'
                 masterLayer = arcpy.mapping.Layer(newmastertopo)
-                #arcpy.SelectLayerByLocation_management(masterLayer,'intersect', inputSHP, '0.25 KILOMETERS')  #it doesn't seem to work without the distance
-                arcpy.SelectLayerByLocation_management(masterLayer,'INTERSECT', inputSHP)
+                arcpy.SelectLayerByLocation_management(masterLayer,'intersect', inputSHP, '0.25 KILOMETERS')  #it doesn't seem to work without the distance
                 cellids_selected = []
                 cellids = []
                 infomatrix = []
@@ -489,8 +527,9 @@ def getCurrentTopo(masterfile_topo,inputSHP,output_folder): # copy current topo 
                     del row
                     del rows
                     masterLayer = None
-                    
+
                     with open(csvfile_h, "rb") as f:
+                        print("___All USGS HTMC Topo List.")
                         reader = csv.reader(f)
                         for row in reader:
                             if row[9] in cellids:
@@ -534,15 +573,22 @@ def getCurrentTopo(masterfile_topo,inputSHP,output_folder): # copy current topo 
                                 if len(yearcandidates) > 0:
                                     # print "***** length of yearcnadidates is " + str(len(yearcandidates))
                                     year2use = str(max(yearcandidates))
+                                print(row[5])
+                                print(year2use)
                                 if year2use == "":
                                     print ("################### cannot determine the year of the map!!")
-                                
+
                                 # ONLY GET 7.5 OR 15 MINUTE MAP SERIES
                                 if row[5] == "7.5X7.5 GRID" or row[5] == "15X15 GRID":
                                     infomatrix.append([row[15],year2use])  # [64818, 15X15 GRID,  LA_Zachary_335142_1963_62500_geo.pdf,  1963]
                     # print(infomatrix)
                     # GET MAX YEAR ONLY
-                    infomatrix = [item for item in infomatrix if item[1] == max(item[1] for item in infomatrix)]             
+                    infomatrix = [item for item in infomatrix if item[1] == max(item[1] for item in infomatrix)]
+                    print("--------------------------------")
+# END --------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+        # print(infomatrix)
+        # print(tifdir_topo)
         _=[]
         for item in infomatrix:
             tifname = item[0][0:-4]   # note without .tif part
@@ -558,7 +604,7 @@ def getCurrentTopo(masterfile_topo,inputSHP,output_folder): # copy current topo 
                 shutil.copyfile(topofile,os.path.join(output_folder,newtopo))
                 _.append(newtopo)
         return _
-        
+
 def getTopoYear(name):
     for year in range(1900,2030):
         if str(year) in name:
@@ -607,7 +653,7 @@ def getWorldAerialYear((centroid_X,centroid_Y)):
     resultBing = urllib.urlopen(fsURL,params).read()
 
     if "error" not in resultBing:
-        for year in list(reversed(range(1900,2050))):
+        for year in list(reversed(range(1900,2020))):
             if str(year) in resultBing :
                 return str(year)
     else:
@@ -615,7 +661,7 @@ def getWorldAerialYear((centroid_X,centroid_Y)):
         key = False
         while tries >= 0:
             if "error" not in resultBing:
-                for year in list(reversed(range(1900,2050))):
+                for year in list(reversed(range(1900,2020))):
                     if str(year) in resultBing:
                         return str(year)
             elif tries == 0:
@@ -650,12 +696,12 @@ def exportViewerTable(ImagePath,FileName):
 if __name__ == '__main__':
     try:
         # INPUT #####################################
-        OrderIDText = '988390'#'#arcpy.GetParameterAsText(0).strip()#'736799'#
+        OrderIDText = '1100895'#'#arcpy.GetParameterAsText(0).strip()#'736799'#
         multipage = False #True if (arcpy.GetParameterAsText(1).lower()=='yes' or arcpy.GetParameterAsText(1).lower()=='y') else False
         gridsize = '2 Miles'#arcpy.GetParameterAsText(2).strip()#0#
         code = 'usa'#arcpy.GetParameterAsText(3).strip()#'usa'#
         isInstant = False #True if arcpy.GetParameterAsText(4).strip().lower()=='yes'else False
-        scratch = r'C:\Users\JLoucks\Documents\JL\test2'
+        scratch = arcpy.env.scratchFolder
 
         # Server Setting ############################
         code = 9093 if code.strip().lower()=='usa' else 9036 if code.strip().lower()=='can' else 9049 if code.strip().lower()=='mex' else ValueError
@@ -716,6 +762,8 @@ if __name__ == '__main__':
             maxBuffer = max([float(_.keys()[0]) for _ in orderInfo['BUFFER_GEOMETRY']]) if orderInfo['BUFFER_GEOMETRY'] !=[] else 0#
             maxBuffer ="%s MILE"%(2*maxBuffer if maxBuffer>0.2 else 2)
             # print(orderInfo['BUFFER_GEOMETRY'])
+            print(bufferMax)
+            print(maxBuffer)
             arcpy.Buffer_analysis(orderGeometrySHP,bufferMax,maxBuffer)
             end = timeit.default_timer()
             arcpy.AddMessage(('create max buffer', round(end -start,4)))
@@ -789,7 +837,7 @@ if __name__ == '__main__':
             start=end
             maptopo.addTextoMap('Address',"Address: %s, %s"%(orderInfo['ADDRESS'],orderInfo['PROVSTATE']))
             maptopo.addTextoMap("OrderNum","Order Number: %s"%orderInfo['ORDER_NUM'])
-            
+
             exportTopo(maptopo,scratch,orderGeometry,orderInfo['ORDER_GEOMETRY']['GEOMETRY_TYPE'],topo_pdf,code,bufferMax,zoneUTM)
             del maptopo,orderGeometry
             end = timeit.default_timer()
@@ -814,8 +862,10 @@ if __name__ == '__main__':
 
         if isInstant:
             shutil.copy(pdfreport,config.instant_reports)
+            arcpy.AddMessage(('Report pdf: %s' % os.path.join(config.instant_reports,os.path.basename(pdfreport))))
         else:
             shutil.copy(pdfreport,config.noninstant_reports)
+            arcpy.AddMessage(('Report pdf: %s' % os.path.join(config.noninstant_reports,os.path.basename(pdfreport))))
         end = timeit.default_timer()
         arcpy.AddMessage(('7 Bundle', round(end -start,4)))
         start=end
