@@ -203,8 +203,8 @@ if __name__ == '__main__':
     ### set input parameters
     order_id = arcpy.GetParameterAsText(0)
     auid = arcpy.GetParameterAsText(1)
-    order_id = '1080939'
-    auid = '7285044'
+    order_id = '1106337'
+    auid = '1056732'
     env = 'prod'
     ## set scratch folder
     scratch_folder = arcpy.env.scratchFolder
