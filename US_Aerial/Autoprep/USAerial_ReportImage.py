@@ -218,6 +218,7 @@ def export_reportimage(imagedict,ordergeometry,image_comment):
         image_lyr = arcpy.mapping.Layer(lyrpath)
         arcpy.mapping.AddLayer(df,image_lyr,'TOP')
     sr = arcpy.GetUTMFromLocation(centroidX,centroidY)
+    sr = arcpy.SpatialReference(4326)
     df.spatialReference = sr
     geometry_layer = arcpy.mapping.ListLayers(mxd,'OrderGeometry',df)[0]
     geometry_layer.visible = False
@@ -410,10 +411,10 @@ def export_frame(imagedict,ordergeometry,buffergeometry):
 
 if __name__ == '__main__':
     start = timeit.default_timer()
-    orderID = '1075864'#arcpy.GetParameterAsText(0)#'1058277'#arcpy.GetParameterAsText(0)#'968634'#arcpy.GetParameterAsText(0)
+    orderID = '1096822'#arcpy.GetParameterAsText(0)#'968634'#arcpy.GetParameterAsText(0)
     ImageType = 'pdf'#arcpy.GetParameterAsText(1)#'geotiff'#pdf,geotiff,frame arcpy.GetParameterAsText(1)
-    UserMapScale = '1800'#arcpy.GetParameterAsText(2)
-    scratch = r'C:\Users\JLoucks\Documents\JL\test4'#arcpy.env.scratchFolder
+    UserMapScale = '2400'#arcpy.GetParameterAsText(2)
+    scratch = arcpy.env.scratchFolder
     job_directory = r'\\192.168.136.164\v2_usaerial\JobData\prod'
     mxdexport_template = r'\\cabcvan1gis007\gptools\Aerial_US\mxd\Aerial_US_Export_new.mxd'
     wgs84_template = r'\\cabcvan1gis007\gptools\Aerial_US\mxd\wgs84_template.mxd'
