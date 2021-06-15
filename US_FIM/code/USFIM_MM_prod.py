@@ -15,6 +15,7 @@ import arcpy, os, sys, glob
 import cx_Oracle, urllib, shutil
 import traceback
 import textwrap
+import re
 import ConfigParser
 sys.path.append(r"C:\Program Files (x86)\Python2.7.7\Lib\site-packages")
 
@@ -406,14 +407,14 @@ secondPic =  os.path.join(connectionPath,"python\coverPic\ERIS_2018_ReportCover_
 
 try:
     OrderIDText = r""#arcpy.GetParameterAsText(0) #'686635'#730125
-    OrderNumText = r"20200727135"
+    OrderNumText = r"21060700393"
     gridsize =  "0.3 KiloMeters"#'0.3 KiloMeters'
     multisheet_Xplorer = 'no' # yes will upload individual fim sheets per year to Xplorer, no will upload one jpg image per year.
 
     BufsizeText ='0.17'#arcpy.GetParameterAsText(1) # '0.17'#
     yesBoundary = ""#arcpy.GetParameterAsText(2) #'yes'#
     selectionDist = '150 FEET'
-    scratch = os.path.join(r"W:\Data Analysts\Alison\_GIS\FIM_SCRATCHY", OrderNumText)
+    scratch = os.path.join(arcpy.env.scratchFolder, OrderNumText)
 #------------------------------------------------------------------------------------------------------------------
 
     summaryList = []

@@ -472,10 +472,16 @@ secondPic =  os.path.join(connectionPath,"python\ERIS_2018_ReportCover_Second Pa
 
 try:
     OrderIDText = r"" #arcpy.GetParameterAsText(0)
-    OrderNumText = r"20200727135"
+    OrderNumText = r"21061400133"
     BufsizeText ='0.17'#arcpy.GetParameterAsText(1) # '0.17'#
     yesBoundary = ''#arcpy.GetParameterAsText(2) #yes/no/fixed
-    scratch = os.path.join(r"W:\Data Analysts\Alison\_GIS\FIM_SCRATCHY", OrderNumText)
+    
+    scratch = os.path.join(arcpy.env.scratchFolder, OrderNumText)
+    if not os.path.exists(scratch):
+        os.makedirs(scratch)
+    else:
+        shutil.rmtree(scratch)
+        
     emgOrder= 'N'
     resolution = '800'
 # -------------------------------------------------------------------------------------------------------------------------------------
