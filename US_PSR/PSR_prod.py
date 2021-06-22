@@ -174,14 +174,18 @@ try:
 ###############################################################################################################
 
     OrderIDText = arcpy.GetParameterAsText(0)
-    scratch = arcpy.env.scratchGDB
-    scratchfolder = arcpy.env.scratchFolder
+    # scratch = arcpy.env.scratchGDB
+    # scratchfolder = arcpy.env.scratchFolder
 
     # gc.collect()
 
 # LOCAL #######################################################################################################
-    OrderIDText = '1003091'
-    scratchfolder = r"C:\Users\JLoucks\Documents\JL\test1"   # for regular .shp etc.
+    OrderIDText = '1115798'
+    scratchfolder = os.path.join(arcpy.env.scratchFolder, OrderIDText+ '_PSR')
+    if not os.path.exists(scratchfolder):
+        os.makedirs(scratchfolder)
+    else:
+        shutil.rmtree(scratch)
     scratch = arcpy.CreateFileGDB_management(scratchfolder,r"scratch.gdb")   # for tables to make Querytable
     scratch = os.path.join(scratchfolder,r"scratch.gdb")
 ###############################################################################################################
