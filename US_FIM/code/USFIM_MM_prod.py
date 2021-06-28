@@ -407,7 +407,7 @@ secondPic =  os.path.join(connectionPath,"python\coverPic\ERIS_2018_ReportCover_
 
 try:
     OrderIDText = r""#arcpy.GetParameterAsText(0) #'686635'#730125
-    OrderNumText = r"21060700393"
+    # OrderNumText = r"21060700393"
     gridsize =  "0.3 KiloMeters"#'0.3 KiloMeters'
     multisheet_Xplorer = 'no' # yes will upload individual fim sheets per year to Xplorer, no will upload one jpg image per year.
 
@@ -415,6 +415,10 @@ try:
     yesBoundary = ""#arcpy.GetParameterAsText(2) #'yes'#
     selectionDist = '150 FEET'
     scratch = os.path.join(arcpy.env.scratchFolder, OrderNumText)
+    if not os.path.exists(scratch):
+        os.makedirs(scratch)
+    else:
+        shutil.rmtree(scratch)
 #------------------------------------------------------------------------------------------------------------------
 
     summaryList = []
