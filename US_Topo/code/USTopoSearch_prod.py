@@ -1455,19 +1455,18 @@ try:
                 arcpy.AddMessage('xplorer upload: '+ str(response_json['TopoUploadResult']))
             else:
                 arcpy.AddError('xplorer upload: '+ str(response_json['TopoUploadResult'])+ ' '+OrderNumText)
+            try:
+                con = cx_Oracle.connect(connectionString)
+                cur = con.cursor()
+                
+                cur.callfunc('eris_gis.populateOverlayImageInfo', str, (int(OrderIDText),str(metadata)))
+            finally:
+                cur.close()
+                con.close()
 
 
         else:
             arcpy.AddMessage("No viewer is needed. Do nothing")
-
-        try:
-            con = cx_Oracle.connect(connectionString)
-            cur = con.cursor()
-            
-            cur.callfunc('eris_gis.populateOverlayImageInfo', str, (int(OrderIDText),str(metadata)))
-        finally:
-            cur.close()
-            con.close()
 
         # see if need to provide the tiffs too
         if len(copydirs) > 0:
