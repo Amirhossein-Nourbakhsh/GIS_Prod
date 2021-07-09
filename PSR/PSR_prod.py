@@ -7,7 +7,7 @@ import gc, time
 import traceback
 from numpy import gradient
 from numpy import arctan2, arctan, sqrt
-import psr_config
+import PSR_config as psr_config
 import json
 
 def returnUniqueSetString_musym(tableName):
@@ -167,22 +167,14 @@ try:
     # gc.collect()g
 
 # LOCAL #########################################################################
-    OrderIDText = ''
-    OrderNumText = r"21052400224"
-    scratchfolder = os.path.join(r"C:\Users\HKiavarz\AppData\Local\Temp\scratch", OrderNumText)
+    OrderIDText = '1129994'
+    scratchfolder = r'C:\Users\JLoucks\Documents\JL\test1'
     scratch = arcpy.CreateFileGDB_management(scratchfolder,r"scratch.gdb")   # for tables to make Querytable
     scratch = os.path.join(scratchfolder,r"scratch.gdb")
 #################################################################################
     try:
         con = cx_Oracle.connect(connectionString)
         cur = con.cursor()
-
-        # GET ORDER_ID FROM ORDER_NUM
-        if OrderIDText == "":
-            cur.execute("SELECT * FROM ERIS.PSR_AUDIT WHERE ORDER_ID IN (select order_id from orders where order_num = '" + str(OrderNumText) + "')")
-            result = cur.fetchall()
-            OrderIDText = str(result[0][0]).strip()
-            print("Order ID: " + OrderIDText)
 
         cur.execute("select order_num, address1, city, provstate from orders where order_id =" + OrderIDText)
         t = cur.fetchone()
