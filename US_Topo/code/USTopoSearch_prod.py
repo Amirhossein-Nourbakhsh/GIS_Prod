@@ -1449,7 +1449,13 @@ try:
                 shutil.rmtree(os.path.join(viewerFolder, OrderNumText+"_topo"))
             shutil.copytree(os.path.join(scratch, OrderNumText+"_topo"), os.path.join(viewerFolder, OrderNumText+"_topo"))
             url = topouploadurl + OrderNumText
-            urllib.urlopen(url)
+            response = urllib.urlopen(url)
+            response_json = json.loads(response.read())
+            if response_json['TopoUploadResult'] == 'OK':
+                arcpy.AddMessage('xplorer upload: '+ str(response_json['TopoUploadResult']))
+            else:
+                arcpy.AddError('xplorer upload: '+ str(response_json['TopoUploadResult'])+ ' '+OrderNumText)
+
 
         else:
             arcpy.AddMessage("No viewer is needed. Do nothing")
@@ -1457,17 +1463,12 @@ try:
         try:
             con = cx_Oracle.connect(connectionString)
             cur = con.cursor()
-
-            cur.execute("delete from overlay_image_info where  order_id = %s and (type = 'topo75' or type = 'topo150')" % str(OrderIDText))
-
-            if needViewer == 'Y':
-                for item in metadata:
-                    cur.execute("insert into overlay_image_info values (%s, %s, %s, %.5f, %.5f, %.5f, %.5f, %s, '', '')" % (str(OrderIDText), str(OrderNumText), "'" + item['type']+"'", item['lat_sw'], item['long_sw'], item['lat_ne'], item['long_ne'],"'"+item['imagename']+"'" ) )
-                con.commit()
-
+            
+            cur.callfunc('eris_gis.populateOverlayImageInfo', str, (int(OrderIDText),str(metadata)))
         finally:
             cur.close()
             con.close()
+
         # see if need to provide the tiffs too
         if len(copydirs) > 0:
             if os.path.exists(os.path.join(reportcheckFolder,"TopographicMaps",OrderNumText+"_US_Topo.zip")):
