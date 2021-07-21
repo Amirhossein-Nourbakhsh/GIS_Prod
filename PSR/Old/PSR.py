@@ -186,7 +186,7 @@ try:
     arcpy.env.OverWriteOutput = True
 
 # LOCAL #######################################################################################################
-    # OrderIDText = '1078726'
+    OrderIDText = '1140854'
     scratch_gdb = arcpy.CreateFileGDB_management(scratch_folder,r"scratch_gdb.gdb")   # for tables to make Querytable
     scratch_gdb = os.path.join(scratch_folder,r"scratch_gdb.gdb")
 ###############################################################################################################
@@ -205,7 +205,7 @@ try:
         cur.execute("select geometry_type, geometry, radius_type  from eris_order_geometry where order_id =" + OrderIDText)
         t = cur.fetchone()
 
-        cur.callproc('eris_psr.ClearOrder', (OrderIDText,))
+        # cur.callproc('eris_psr.ClearOrder', (OrderIDText,))
 
         OrderType = str(t[0])
         OrderCoord = eval(str(t[1]))
@@ -552,10 +552,10 @@ try:
         pipeline_cursor = arcpy.SearchCursor(pipeline_lyr) # use it for inserting in DB 
         
         df_sp = arcpy.mapping.ListDataFrames(mxd_sp,"*")[0]
-        df_sp.spatialRef = out_coordinate_system
         df_sp.extent = data_frame_desc.extent
         addBuffertoMxd("buffer_sp",df_sp)
         addOrdergeomtoMxd("ordergeoNamePR", df_sp)
+        df_sp.spatialReference = spatialRef
         for lyr in arcpy.mapping.ListLayers(mxd_sp):
             # clear selections
             if lyr.isFeatureLayer:
@@ -564,6 +564,7 @@ try:
         if not multipage_sp:
             mxd_sp.saveACopy(os.path.join(scratch_folder,"mxd_sp.mxd"))
             mxd_sp_tmp = arcpy.mapping.MapDocument(os.path.join(scratch_folder,"mxd_sp.mxd"))
+            df_tmp_sp = arcpy.mapping.ListDataFrames(mxd_sp_tmp,"*")[0]
             arcpy.mapping.ExportToJPEG(mxd_sp_tmp, outputjpg_sp, "PAGE_LAYOUT", 480, 640, 150, "False", "24-BIT_TRUE_COLOR", 85)
             if not os.path.exists(os.path.join(report_path, 'PSRmaps', OrderNumText)):
                 os.mkdir(os.path.join(report_path, 'PSRmaps', OrderNumText))
@@ -665,7 +666,7 @@ try:
             cur.close()
         ### Generate KML if need viewer
         if need_viewer:
-            df_sp.spatialRef = srWGS84
+            df_sp.spatialReference = srWGS84
             
             #re-focus using Buffer layer for multipage
             if multipage_sp:
