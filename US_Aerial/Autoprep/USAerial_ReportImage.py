@@ -331,6 +331,12 @@ def export_frame(imagedict,ordergeometry,buffergeometry):
             image_collection = image['IMAGE_COLLECTION_TYPE']
             auid = str(image['AUI_ID'])
             imagepath = image['ORIGINAL_IMAGE_PATH']
+            if image['COMMENTS'] == None:
+                image_comment = ''
+                image_name = image_year + '_' + image_source + '_' +str(image_per_year) + '.tif'
+            else:
+                image_comment = image['COMMENTS']
+                image_name = image_year + '_' + image_source + '_' +str(image_per_year) + '_' +image_comment + '.tif'
             image_per_year += 1
             if FactoryCode == '':
                 sr = arcpy.SpatialReference(4326)
@@ -338,7 +344,7 @@ def export_frame(imagedict,ordergeometry,buffergeometry):
                 sr = arcpy.GetUTMFromLocation(centroidX,centroidY)
             else:
                 sr = arcpy.SpatialReference(int(FactoryCode))
-            fin_image_name = os.path.join(job_fin,image_year + '_' + image_source + '_' +str(image_per_year) + '.tif')
+            fin_image_name = os.path.join(job_fin,image_name)
             if image_collection == 'DOQQ':
                 arcpy.overwriteOutput = True
                 mxd = arcpy.mapping.MapDocument(mxdexport_template)
@@ -395,7 +401,7 @@ def export_frame(imagedict,ordergeometry,buffergeometry):
             extent = raster_desc.extent
             centerlong = round(extent.XMin + (extent.XMax - extent.XMin)/2, 7)
             centerlat = round(extent.YMin + (extent.YMax - extent.YMin)/2, 7)
-            set_imagedetail(extent,centerlat,centerlong,image_year + '_' + image_source + '_' +str(image_per_year) + '.tif')
+            set_imagedetail(extent,centerlat,centerlong,image_name)
 
         
 
