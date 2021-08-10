@@ -387,26 +387,23 @@ def getWorldAerialYear((centroid_X,centroid_Y)):
     import re
     fsURL = r"https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/0/query?f=json&returnGeometry=false&spatialRel=esriSpatialRelIntersects&maxAllowableOffset=0&geometryType=esriGeometryPoint&inSR=4326&outFields=SRC_DATE%2CNICE_DESC"
     params = urllib.urlencode({'geometry':"'geometry':'x':%s,'y':%s"%(centroid_X,centroid_Y)})
-    resultBing = urllib.urlopen(fsURL,params).read()
-    if "error" not in resultBing and '"features":[]' not in resultBing:
-        for year in range(1900,2020):
-            if str(year) in resultBing :
-                source = re.search(r'"(\bNICE_DESC\b)":"(?!.*\b\1\b).+"',resultBing).group().strip("'").split(":")[-1].strip('"')
-                return [str(year),source]
+    resultBing = json.loads(urllib.urlopen(fsURL,params).read())
+    if "error" not in str(resultBing) and '"features":[]' not in str(resultBing):
+        year = str(resultBing['features'][0]['attributes']['SRC_DATE'])[0:4]
+        source = str(resultBing['features'][0]['attributes']['NICE_DESC'])
     else:
         tries = 5
         key = False
         while tries >= 0:
             if "error" not in resultBing and '"features":[]' not in resultBing:
-                for year in range(1900,2020):
-                    if str(year) in resultBing:
-                        source = re.search(r'"(\bNICE_DESC\b)":"(?!.*\b\1\b).+"',resultBing).group().strip("'").split(":")[-1].strip('"')
-                        return [str(year),source]
+                year = str(resultBing['features'][0]['attributes']['SRC_DATE'])[0:4]
+                source = str(resultBing['features'][0]['attributes']['NICE_DESC'])
             elif tries == 0:
                     return ["2015","DigitalGlobe"]
             else:
                 time.sleep(5)
                 tries -= 1
+    return[year,source]
 
 # ### ENVIRONMENTAL SETTING ####
 arcpy.Delete_management(r"in_memory")
@@ -511,7 +508,10 @@ if __name__ == '__main__':
 
             # add World Imagery
             map1.df.spatialReference = arcpy.SpatialReference(4326)
+            print 'running imagery year -----------------------------'
             [year,source] = getWorldAerialYear(eval(orderInfo['ORDER_GEOMETRY']['CENTROID'].strip('[]')))
+            print str(year)
+            print str(source)
             image = 'satellite_%s_%s.jpg'%(year,orderID)
             map1.addLayer(config.LAYER.worldsatellite,add_position="BOTTOM")
             map1.zoomToTopLayer()
