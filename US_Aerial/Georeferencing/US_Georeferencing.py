@@ -203,8 +203,8 @@ if __name__ == '__main__':
     ### set input parameters
     order_id = arcpy.GetParameterAsText(0)
     auid = arcpy.GetParameterAsText(1)
-    order_id = '1106337'
-    auid = '1056732'
+    order_id = '1164857'
+    auid = '7809131'
     env = 'prod'
     ## set scratch folder
     scratch_folder = arcpy.env.scratchFolder
@@ -266,8 +266,8 @@ if __name__ == '__main__':
                         # make a copy of raw image in the local folder beacuse the TAB file along with image format on server make arcgis confused
                         parts = os.path.basename(image_input_path_inv).split('.')
                         input_raw_image_name = "".join(parts[:-1]) + '_raw' + '.' + parts[-1]
-                        shutil.copy(image_input_path_inv, os.path.join(arcpy.env.scratch_folder,input_raw_image_name))
-                        input_image = os.path.join(arcpy.env.scratch_folder,input_raw_image_name)
+                        shutil.copy(image_input_path_inv, os.path.join(scratch_folder,input_raw_image_name))
+                        input_image = os.path.join(scratch_folder,input_raw_image_name)
                     arcpy.AddMessage('Input Image : %s' % input_image)
                     gcp_points = CoordToString(aerial_georefjson['envelope']) # footPrint
                     ### Source point from input extent
