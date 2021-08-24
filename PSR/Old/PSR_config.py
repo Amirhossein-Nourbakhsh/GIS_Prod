@@ -26,7 +26,7 @@ def server_loc_config(configpath,environment):
 server_environment = 'prod'
 server_config_file = r'\\cabcvan1gis006\GISData\ERISServerConfig.ini'
 server_config = server_loc_config(server_config_file,server_environment)
-connectionString = r'ERIS_GIS/gis295@GMPRODC.glaciermedia.inc'
+connectionString = r'ERIS_GIS/gis295@GMPRODC.glaciermedia.inc' #eris_gis/gis295@cabcvan1ora003.glaciermedia.inc:1521/GMPRODC
 report_path = server_config['noninstant']
 viewer_path = server_config['viewer']
 upload_link = server_config['viewer_upload']+r"/ErisInt/BIPublisherPortal_prod/Viewer.svc/"
@@ -52,7 +52,7 @@ data_geol = r'\\cabcvan1gis006\GISData\Data\PSR\PSR.gdb\GEOL_DD_MERGE'
 data_flood = r'\\cabcvan1gis006\GISData\Data\PSR\PSR.gdb\S_Fld_haz_Ar_merged'
 data_floodpanel = r'\\cabcvan1gis006\GISData\Data\PSR\PSR.gdb\S_FIRM_PAN_MERGED'
 data_wetland = r'\\cabcvan1gis006\GISData\Data\PSR\PSR.gdb\Merged_wetland_Final'
-eris_wells = r"\\cabcvan1gis006\GISData\PSR\python\mxd\ErisWellSites.lyr"   #which contains water, oil/gas wells etc.
+eris_wells = r"\\cabcvan1gis006\GISData\PSR\python\mxd\CZ_ErisWellSites.lyr"   #which contains water, oil/gas wells etc.
 path_shadedrelief = r"\\cabcvan1fpr009\US_DEM\hillshade13"
 datalyr_wetland = r"\\cabcvan1gis006\GISData\PSR\python\mxd\wetland_kml.lyr"
 ##datalyr_wetlandNY = r"E:\GISData\PSR\python\mxd\wetlandNY.lyr"
