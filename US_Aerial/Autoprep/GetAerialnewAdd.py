@@ -165,7 +165,7 @@ if __name__ == '__main__':
     arcpy.CreateFileGDB_management(scratch, 'temp.gdb')
     arcpy.env.workspace = os.path.join(scratch,'temp.gdb')
     job_directory = r'\\192.168.136.164\v2_usaerial\JobData\prod'
-    georeferenced_historical = r'\\cabcvan1nas003\historical\Georeferenced_Aerial'
+    georeferenced_historical = r'\\cabcvan1fpr436\HISTORICAL-F\Georeferenced_Aerial'
     georeferenced_doqq = r'\\cabcvan1nas003\doqq\Georeferenced_DOQQ'
     mxdexport_template = r'\\cabcvan1gis007\gptools\Aerial_US\mxd\Aerial_US_Export.mxd'
     arcpy.env.OverwriteOutput = True
