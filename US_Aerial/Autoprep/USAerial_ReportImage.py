@@ -228,13 +228,7 @@ def export_reportimage(imagedict,ordergeometry,image_comment):
     geometry_layer = arcpy.mapping.ListLayers(mxd,'OrderGeometry',df)[0]
     geometry_layer.visible = False
     geo_extent = geometry_layer.getExtent(True)
-    df.extent = geo_extent
-    MapScale = 6000
-    if PrintScale is not None:
-        df.scale = PrintScale
-        MapScale = PrintScale
-    else:
-        arcpy.AddError('No scale set for order')
+    df.extent = arcpy.Describe(os.path.join(job_directory,str(OrderNumText),'extentwgs84.jpg')).extent
     export_width = 5100
     export_height = 6600
     arcpy.RefreshActiveView()
@@ -293,13 +287,7 @@ def export_geotiff(imagedict,ordergeometry,image_comment):
     geometry_layer = arcpy.mapping.ListLayers(mxd,'OrderGeometry',df)[0]
     geometry_layer.visible = False
     geo_extent = geometry_layer.getExtent(True)
-    df.extent = geo_extent
-    MapScale = 6000
-    if PrintScale is not None:
-        df.scale = PrintScale
-        MapScale = PrintScale
-    else:
-        arcpy.AddError('No scale set for order')
+    df.extent = arcpy.Describe(os.path.join(job_directory,str(OrderNumText),'extentwgs84.jpg')).extent
     export_width = 5100
     export_height = 6600
     arcpy.RefreshActiveView()
@@ -437,37 +425,6 @@ if __name__ == '__main__':
     selected_list_return = Oracle('prod').call_erisapi(oracle_input)
     selected_list_json = json.loads(selected_list_return[1])
     #print selected_list_json
-
-    #Set dynamic or user defined scale
-    if UserMapScale != '' and FactoryCode == '':
-        if centroidY <= 30:
-            PrintScale = int((int(UserMapScale)*12)*1.25)
-        elif centroidY > 30 and centroidY <= 35:
-            PrintScale = int((int(UserMapScale)*12)*1.3)
-        elif centroidY > 35 and centroidY <= 40:
-            PrintScale = int((int(UserMapScale)*12)*1.35)
-        elif centroidY > 40 and centroidY <= 45:
-            PrintScale = int((int(UserMapScale)*12)*1.4)
-        elif centroidY > 45:
-            PrintScale = int((int(UserMapScale)*12)*1.45)
-    elif UserMapScale != '' and FactoryCode == 'UTM':
-        PrintScale = int(int(UserMapScale)*12)
-    elif UserMapScale != '' and FactoryCode != '':
-        PrintScale = int(int(UserMapScale)*12)
-    else:
-        UserMapScale = '500'
-        MapScale = 6000
-        if centroidY <= 30:
-            PrintScale = int((int(UserMapScale)*12)*1.25)
-        elif centroidY > 30 and centroidY <= 35:
-            PrintScale = int((int(UserMapScale)*12)*1.3)
-        elif centroidY > 35 and centroidY <= 40:
-            PrintScale = int((int(UserMapScale)*12)*1.35)
-        elif centroidY > 40 and centroidY <= 45:
-            PrintScale = int((int(UserMapScale)*12)*1.4)
-        elif centroidY > 45:
-            PrintScale = int((int(UserMapScale)*12)*1.45)
-
     ##create fin directory
     job_fin = os.path.join(job_folder,'fin')
     if os.path.exists(job_fin):

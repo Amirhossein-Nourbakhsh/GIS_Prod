@@ -135,6 +135,7 @@ def createGeometry(pntCoords,geometry_type,output_folder,output_name, spatialRef
 OrderID = arcpy.GetParameterAsText(0)#'968849'#arcpy.GetParameterAsText(0)'1014745'
 scale = arcpy.GetParameterAsText(1)#'2000'#arcpy.GetParameterAsText(1)'1200'
 unit = arcpy.GetParameterAsText(2)#'ft'#arcpy.GetParameterAsText(2)'ft'
+FactoryCode = ''#arcpy.GetParameterAsText(3)
 scratch = arcpy.env.scratchFolder#r'C:\Users\JLoucks\Documents\JL\test9'
 init_env = 'prod'
 jobfolder = os.path.join(r'\\cabcvan1eap003\v2_usaerial\JobData', init_env)
@@ -159,7 +160,10 @@ mxdextent = os.path.join(scratch,'extent.mxd')
 shutil.copy(mxdtemplate,mxdextent)
 mxd = arcpy.mapping.MapDocument(mxdextent)
 df = arcpy.mapping.ListDataFrames(mxd,'*')[0]
-sr = arcpy.GetUTMFromLocation(centroidX,centroidY)
+if FactoryCode == '':
+    sr = arcpy.GetUTMFromLocation(centroidX,centroidY)
+else:
+    sr = arcpy.SpatialReference(int(FactoryCode))
 df.spatialReference = sr
 geo_lyr = arcpy.mapping.Layer(site_feat)
 arcpy.mapping.AddLayer(df,geo_lyr,'TOP')
@@ -171,8 +175,10 @@ df.scale = int(scale)
 arcpy.RefreshActiveView()
 arcpy.mapping.ExportToJPEG(mxd,os.path.join(scratch,'extent.jpg'),df,df_export_width=170,df_export_height=220,world_file = True,jpeg_quality = 10)
 arcpy.DefineProjection_management(os.path.join(scratch,'extent.jpg'),sr)
-arcpy.ProjectRaster_management(os.path.join(scratch,'extent.jpg'),os.path.join(scratch,'extentwgs84.jpg'),4326)
-extentdesc = arcpy.Describe(os.path.join(scratch,'extentwgs84.jpg')).extent
+#arcpy.ProjectRaster_management(os.path.join(scratch,'extent.jpg'),os.path.join(scratch,'extentwgs84.jpg'),4326)
+arcpy.ProjectRaster_management(os.path.join(scratch,'extent.jpg'),os.path.join(jobfolder,str(OrderNumber),'extentwgs84.jpg'),4326)
+extentdesc = arcpy.Describe(os.path.join(jobfolder,str(OrderNumber),'extentwgs84.jpg')).extent
+#extentdesc = arcpy.Describe(os.path.join(scratch,'extent.jpg')).extent
 extentout = [[extentdesc.XMin,extentdesc.YMax],[extentdesc.XMax,extentdesc.YMax],[extentdesc.XMax,extentdesc.YMin],[extentdesc.XMin,extentdesc.YMin],[extentdesc.XMin,extentdesc.YMax]]
 
 arcpy.AddMessage("{0}: {1}".format('Extent Output', extentout))

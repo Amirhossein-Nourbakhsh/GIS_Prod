@@ -164,7 +164,7 @@ def createGeometry(pntCoords,geometry_type,output_folder,output_name, spatialRef
         cursor.insertRow([arcpy.Polygon(arcpy.Array([arcpy.Point(*coords) for coords in pntCoords]),spatialRef)])
     del cursor
     return outputSHP
-def getclipflag(collectiontype,mxd,df,geo_extent,jpg_image):
+def getclipflag(collectiontype,mxd,df,geo_extent,jpg_image,image_year):
     if image_collection != 'DOQQ':
         df.extent = geo_extent
         df.scale = 25000
@@ -177,9 +177,15 @@ def getclipflag(collectiontype,mxd,df,geo_extent,jpg_image):
             return ['Y',clip_size]
         else:
             return ['N',clip_size]
+    elif image_collection == 'DOQQ' and int(image_year) > 2005:
+        clip_size = os.path.getsize(os.path.join(jpg_image_folder,jpg_image))
+        if clip_size <= 1000000:
+            return ['Y',clip_size]
+        else:
+            return ['N',clip_size]
     else:
         clip_size = os.path.getsize(os.path.join(jpg_image_folder,jpg_image))
-        if clip_size <= 1400000:
+        if clip_size <= 4000000:
             return ['Y',clip_size]
         else:
             return ['N',clip_size]
