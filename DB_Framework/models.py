@@ -79,14 +79,15 @@ class Order(object):
     @classmethod
     def __getGeometry(self): # return geometry in WGS84 (GCS) / private function
         sr_wgs84 = arcpy.SpatialReference(4326)
-        order_fc = db_connections.order_fc
-        # orderGeom = arcpy.da.SearchCursor(order_fc,("SHAPE@"),"order_id = " + str(self.Id) ).next()[0]
+        con = cx_Oracle.connect(db_connections.connection_string)
+        cursor = con.cursor()
+        sql_statement = "select geometry_type, geometry, radius_type  from eris_order_geometry where order_id =" + self.id
         order_geom = None
         if order_geom == None:
             order_geom = arcpy.Geometry()
-            where = 'order_id = ' + str(self.id)
-            row = arcpy.da.SearchCursor(order_fc,("GEOMETRY_TYPE","GEOMETRY", "RADIUS_TYPE"),where).next()
-            coord_string = ((row[1])[1:-1])
+            cursor.execute(sql_statement)
+            row = cursor.fetchone()
+            coord_string = ((row[1].read())[1:-1])
             coordinates = np.array(literal_eval(coord_string))
             geometry_type = row[0]
             self.radius_type = row[2]
@@ -96,7 +97,7 @@ class Order(object):
                 order_geom = arcpy.Polyline(arcpy.Array([arcpy.Point(*coords) for coords in coordinates]), sr_wgs84)
             elif geometry_type.lower() =='polygon':
                 order_geom = arcpy.Polygon(arcpy.Array([arcpy.Point(*coords) for coords in coordinates]), sr_wgs84)
-        return order_geom.projectAs(sr_wgs84)          
+        return order_geom.projectAs(sr_wgs84)            
     @classmethod
     def get_sr_pcs(self):
         centre_point = self.geometry.trueCentroid
