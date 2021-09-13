@@ -393,10 +393,12 @@ def addERISpoly(polyInfo,mxd,output_folder,out_polys=r'polys.shp'):
         ## expression to define if the shape is multipart as yes or no instead of true or false ##
         multipoly_exp = "ismultipart(!SHAPE.isMultipart!)"
         multipoly_cblock = """def ismultipart(polypart):
-                        if polypart == True:
-                            return 'Yes'
-                        else:
-                            return 'No'"""
+                                if polypart == 'TRUE':
+                                    return 'Yes'
+                                elif polypart == 'FALSE':
+                                    return 'No'
+                                else:
+                                    return 'NA'"""
         #arcpy.CalculateField_management (out_polysSHP, 'multiPoly', "!SHAPE.isMultipart!", "PYTHON_9.3")
         arcpy.CalculateField_management (out_polysSHP, 'multiPoly', multipoly_exp, "PYTHON_9.3",multipoly_cblock)
         arcpy.CalculateField_management (out_polysSHP, 'polyCount', "!SHAPE.partCount!", "PYTHON_9.3")
@@ -767,8 +769,8 @@ if __name__ == '__main__':
         grid_unit = 'Kilometers' if code == 9036 and float(grid_size.strip())<100 else 'Meters' if code ==9036 else 'Miles'
         grid_size = '%s %s'%(grid_size,grid_unit)
         viewer_path = server_config['viewer']
-        currentuploadurl = server_config['viewer_upload']+r"/ErisInt/BIPublisherPortal_test/Viewer.svc/CurImageUpload?ordernumber="
-        kml_upload_service_url  = server_config['viewer_upload'] + r"/ErisInt/BIPublisherPortal/Viewer.svc/ErisKmlUpload?ordernumber="
+        currentuploadurl = server_config['viewer_upload']+r"/ErisInt/BIPublisherPortal_prod/Viewer.svc/CurImageUpload?ordernumber="
+        kml_upload_service_url  = server_config['viewer_upload'] + r"/ErisInt/BIPublisherPortal_prod/Viewer.svc/ErisKmlUpload?ordernumber="
         
         # STEPS ####################################
         # 1  get order info by Oracle call
