@@ -42,6 +42,8 @@ class Order(object):
                 self.number = str(row[0])
                 order_obj.id = input_id
                 order_obj.number = str(row[0])
+                cursor.execute("select geometry_type, geometry, radius_type  from eris_order_geometry where order_id =" + order_obj.id)
+
             else:
                 del cursor 
                 del row
@@ -56,6 +58,7 @@ class Order(object):
                     self.number = str(input_id)
                     order_obj.id = str(row[0])
                     order_obj.number = str(input_id)
+                    cursor.execute("select geometry_type, geometry, radius_type  from eris_order_geometry where order_id =" + order_obj.id)
                 else:
                      return None  
             order_obj.full_address = str(row[1])+", "+str(row[2])+", "+str(row[3])
