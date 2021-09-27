@@ -35,11 +35,11 @@ def ds(DataSources):
 def getStreetList(query, unit1):
 
     if country== 'US':
-        streetlyr = r'\\cabcvan1gis007\gptools\ERISDB_Report\layer\Streets\Streets_US.lyr'
-        streetFieldName = "FULLNAME"
+        streetlyr = r'\\cabcvan1gis007\data\North_American_Street_Map.gdb\Streetcarto'
+        streetFieldName = "StreetName"
     else:
-        streetlyr = r'\\cabcvan1gis007\gptools\ERISDB_Report\layer\Streets\Streets_CA.lyr'
-        streetFieldName = "STREET"
+        streetlyr = r'\\cabcvan1gis007\data\North_American_Street_Map.gdb\Streetcarto'
+        streetFieldName = "StreetName"
 
     try:
         streetLayer = arcpy.mapping.Layer(streetlyr)

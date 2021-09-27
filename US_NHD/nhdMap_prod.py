@@ -15,8 +15,8 @@ import cx_Oracle,json
 start1 = timeit.default_timer()
 # ### ENVIRONMENTAL SETTING ####
 arcpy.env.overwriteOutput = True
-eris_nhdreport_path =r"GISData\NHDReport"
-eris_report_path = r"GISData\ERISReport\ERISReport\PDFToolboxes"
+eris_nhdreport_path =r"gptools\NHDReport"
+eris_report_path = r"gptools\ERISDB_Report\PDFToolboxes"
 class Machine:
     machine_test = r"\\cabcvan1gis006"
     machine_prod = r"\\cabcvan1gis007"
@@ -24,8 +24,8 @@ class Credential:
     oracle_test = r"ERIS_GIS/gis295@GMTESTC.glaciermedia.inc"
     oracle_production = r"ERIS_GIS/gis295@GMPRODC.glaciermedia.inc"
 class ReportPath:
-    instant_report_test = r"\\cabcvan1obi002\ErisData\Reports\test\instant_reports"
-    instant_report_prod = r"\\cabcvan1obi002\ErisData\Reports\prod\instant_reports"
+    instant_report_test = r"\\cabcvan1eap006\ErisData\Reports\test\instant_reports"
+    instant_report_prod = r"\\cabcvan1eap006\ErisData\Reports\prod\instant_reports"
 class Map(object):
     def __init__(self,mxdPath,dfname=''):
         self.mxd = arcpy.mapping.MapDocument(mxdPath)

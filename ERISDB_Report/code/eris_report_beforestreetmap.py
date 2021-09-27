@@ -135,14 +135,6 @@ class Map(object):
         arcpy.RefreshTOC()
         arcpy.RefreshActiveView()
 
-    def turnOffLayer(self,layerlist):
-        layers = arcpy.mapping.ListLayers(self.mxd, "*", self.df)
-        for layer in layers:
-            if layer in layerlist:
-                layer.visible = False
-        arcpy.RefreshTOC()
-        arcpy.RefreshActiveView()
-
     def turnLabel(self,lyr_name,visibility =True):
         layers = arcpy.mapping.ListLayers(self.mxd, "*", self.df)
         for layer in layers:
@@ -199,12 +191,11 @@ class MXD():
         if code == 9093:        # USA
             self.mxdtopo = os.path.join(machine_path,eris_report_path,r"mxd","USTopoMapLayoutCC.mxd")
             self.mxdbing = os.path.join(machine_path,eris_report_path,r"mxd","USBingMapLayoutCC.mxd")
-            self.mxdMM = os.path.join(machine_path,eris_report_path,'mxd','USLayoutMMCC_SM.mxd')
-            self.mxdWW = os.path.join(machine_path,eris_report_path,'mxd','USLayoutWWCC.mxd')
+            self.mxdMM = os.path.join(machine_path,eris_report_path,'mxd','USLayoutMMCC.mxd')
         elif code == 9036:      # CAN
             self.mxdtopo = os.path.join(machine_path,eris_report_path,r"mxd","TopoMapLayoutCC.mxd")
             self.mxdbing = os.path.join(machine_path,eris_report_path,r"mxd","BingMapLayoutCC.mxd")
-            self.mxdMM = os.path.join(machine_path,eris_report_path,'mxd','CADLayoutMMCC_SM.mxd')
+            self.mxdMM = os.path.join(machine_path,eris_report_path,'mxd','DMTILayoutMMCC.mxd')
         elif code == 9049:      # MEX
             self.mxdtopo = os.path.join(machine_path,eris_report_path,r"mxd","TopoMapLayoutCC.mxd")
             self.mxdbing = os.path.join(machine_path,eris_report_path,r"mxd","USBingMapLayoutCC.mxd")
@@ -441,17 +432,12 @@ def getMaps(mxd, output_folder,map_name,buffer_dict, buffer_sizes_list,unit_code
     if buffer_name.endswith(".shp"):
         buffer_name = buffer_name[:-4]
     bufferLayer = config.LAYER.buffer
-    if report_type == 'WW':
-        topoLayer = config.LAYER.topowhite
-        topolist = getCurrentTopo(config.DATA.data_topo,buffer_max,output_folder)
-        for topo in topolist:
-            mxd.addLayer(topoLayer,output_folder,topo.split('.')[0],"RASTER_WORKSPACE","BOTTOM")
     for i in buffer_dict.keys():
         if buffer_sizes_list[i]>=0.04:
             mxd.addLayer(bufferLayer,output_folder,"buffer_%s"%(i))
         if i in buffer_dict.keys()[-3:]:
             mxd.zoomToLayer("Grid") if i == buffer_dict.keys()[-1] and multi_page == True else mxd.zoomToTopLayer()
-            mxd.df.scale = ((int(1.5*mxd.df.scale)/100)+1)*100
+            mxd.df.scale = ((int(1.1*mxd.df.scale)/100)+1)*100
             unit = 'Kilometer' if unit_code ==9036 else 'Mile'
             mxd.addTextoMap("Map","Map: %s %s Radius"%(buffer_sizes_list[i],unit))
             arcpy.mapping.ExportToPDF(mxd.mxd,os.path.join(output_folder,map_name%(i)))
@@ -477,13 +463,13 @@ def exportmulti_page(mxd,output_folder,map_name,UTMzone,grid_size,erisPointLayer
     mxd.replaceLayerSource("Grid",output_folder,gridlr)
     arcpy.CalculateAdjacentFields_cartography(gridlrSHP, u'PageNumber')
     mxd.turnLabel(erisPointLayer,False)
-    if code == 9093 and erisPolysLayer != None: #polygons currently only exist on US reports - change if polygons are added to other countries in future
+    if code == 9093: #polygons currently only exist on US reports - change if polygons are added to other countries in future
         mxd.turnLabel(erisPolysLayer,False)
     mxd.df.spatialReference = arcpy.SpatialReference('WGS 1984 UTM Zone %sN'%UTMzone)
     mxd.resolution =250
     temp = getMaps(mxd, output_folder,map_name, buffer_dict, buffer_sizes_list, unit_code, buffer_name=r"buffer_%s.shp", multi_page = True)
     mxd.turnLabel(erisPointLayer,True)
-    if code == 9093 and erisPolysLayer != None: #polygons currently only exist on US reports - change if polygons are added to other countries in future
+    if code == 9093: #polygons currently only exist on US reports - change if polygons are added to other countries in future
         mxd.turnLabel(erisPolysLayer,True)
     mxd.addTextoMap("Map","Grid: ")
     mxd.addTextoMap("Grid",'<dyn type="page"  property="number"/>')
@@ -735,14 +721,10 @@ def export_to_kml(order_number,layer):
         os.mkdir(scratch_kml_path)
     if int((arcpy.GetCount_management(layer).getOutput(0))) > 0:
         undesired_fields = ['mapkey','ds_oid']
-        hidden_fields = ['fid','elerank']
         field_info = arcpy.Describe(layer).fieldInfo
         for i in range(0, field_info.count):
             if field_info.getFieldName(i).lower() in undesired_fields:
                 arcpy.DeleteField_management(layer,field_info.getFieldName(i))
-            elif field_info.getFieldName(i).lower() in hidden_fields:
-                field_info.setVisible(i,"HIDDEN")
-    #arcpy.MakeFeatureLayer_management(layer,'temp_lyr',"","",field_info)
     arcpy.LayerToKML_conversion(layer, os.path.join(scratch_kml_path,"eris_polygon.kmz"))        
         ### copy kml to viewer folder
     if os.path.exists(os.path.join(viewer_path, order_number + '_eris_kml')):
@@ -756,12 +738,11 @@ def export_to_kml(order_number,layer):
 if __name__ == '__main__': 
     try:
         # INPUT #####################################
-        order_id = arcpy.GetParameterAsText(0).strip()       
+        order_id = arcpy.GetParameterAsText(0).strip()
         multi_page = True if (arcpy.GetParameterAsText(1).lower()=='yes' or arcpy.GetParameterAsText(1).lower()=='y') else False
         grid_size = arcpy.GetParameterAsText(2).strip()#0#
         code = arcpy.GetParameterAsText(3).strip()#'usa'#
         is_instant = True if arcpy.GetParameterAsText(4).strip().lower()=='yes'else False
-        report_type = ''
         scratch = arcpy.env.scratchFolder
         env = 'prod'
         
@@ -819,10 +800,7 @@ if __name__ == '__main__':
 
         # 4 Maps
         # 4-0 initial Map
-        if report_type == 'WW':
-            map1 = Map(config.MXD.mxdWW)
-        else:
-            map1 = Map(config.MXD.mxdMM)
+        map1 = Map(config.MXD.mxdMM)
         end = timeit.default_timer()
         arcpy.AddMessage(('4-0 initiate object Map', round(end -start,4)))
         start=end
@@ -838,10 +816,10 @@ if __name__ == '__main__':
             arcpy.AddMessage(('create max buffer', round(end -start,4)))
             start=end
             # 4-1 add Road US
-            # addRoadLayer(map1, buffer_max,scratch)
-            # end = timeit.default_timer()
-            # arcpy.AddMessage(('4-1 clip and add road', round(end -start,4)))
-            # start=end
+            addRoadLayer(map1, buffer_max,scratch)
+            end = timeit.default_timer()
+            arcpy.AddMessage(('4-1 clip and add road', round(end -start,4)))
+            start=end
 
         # 4-2 add ERIS points
         erisPointsInfo = Oracle(env).call_function('geterispointdetails',order_id)
@@ -861,11 +839,7 @@ if __name__ == '__main__':
         # 4-3 Add Address n Order Number Turn on Layers
         map1.addTextoMap('Address',"Address: %s, %s, %s"%(orderInfo['ADDRESS'],orderInfo["CITY"],orderInfo['PROVSTATE']))
         map1.addTextoMap("OrderNum","Order Number: %s"%orderInfo['ORDER_NUM'])
-        hidden_layers = ['Land','Water Background']
         map1.turnOnLayer()
-        map1.turnOffLayer(hidden_layers)
-        if report_type == 'WW':
-            map1.turnOffLayer(hidden_layers)
         end = timeit.default_timer()
         arcpy.AddMessage(('4-3 Add Address n turn on source layers', round(end -start,4)))
         start=end

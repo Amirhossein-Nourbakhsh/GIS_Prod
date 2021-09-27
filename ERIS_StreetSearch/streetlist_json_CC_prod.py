@@ -24,9 +24,9 @@ class Credential:
     oracle_test = r"ERIS_GIS/gis295@GMTESTC.glaciermedia.inc"
     oracle_production = r"ERIS_GIS/gis295@GMPRODC.glaciermedia.inc"
 class LAYER:
-    streetlyr_US =  r"F:\gptools\ERISStreetlist\ERISSearch.gdb\tl_finalmerge"
-    streetlyr_CA = r"F:\gptools\ERISStreetlist\ERISSearch.gdb\ERISRoads"
-    streetlyr_MX = r"F:\gptools\ERISStreetlist\ERISSearch.gdb\MEX_street_all"
+    streetlyr_US =  r"\\cabcvan1gis007\data\North_American_Street_Map.gdb\Streetcarto"
+    streetlyr_CA = r"\\cabcvan1gis007\data\North_American_Street_Map.gdb\Streetcarto"
+    streetlyr_MX = r"\\cabcvan1gis007\gptools\ERISStreetlist\ERISSearch.gdb\MEX_street_all"
 class Oracle:
     # static variable: oracle_functions
     oracle_functions = {
@@ -150,9 +150,9 @@ def toJson(data):
 def getStreetList(streetlyr, clip_buffer,unit1):
     arcpy.Delete_management(r'in_memory\temp')
     if unit1 == 9036:
-        streetFieldName = "STREET"
+        streetFieldName = "StreetName"
     elif unit1 == 9093:
-        streetFieldName = "FULLNAME"
+        streetFieldName = "StreetName"
     elif unit1 == 9035:
         streetFieldName = "NOMVIAL"
     try:
@@ -183,9 +183,9 @@ def getStreetList(streetlyr, clip_buffer,unit1):
 if __name__ == '__main__':
     try:
         ##  INPUT ##################
-        orderID = '825276'# arcpy.GetParameterAsText(0).strip()
-        code ='mex'#arcpy.GetParameterAsText(1).strip()#'usa' #
-        scratch =r"F:\testing\scratch\code\scratch"#arcpy.env.scratchFolder#
+        orderID = '1129766'# arcpy.GetParameterAsText(0).strip()
+        code ='can'#arcpy.GetParameterAsText(1).strip()#'usa' #
+        scratch =r"C:\Users\JLoucks\Documents\JL\test2"#arcpy.env.scratchFolder#
         scratchGDB =os.path.join(scratch,"scratch.gdb")
         arcpy.CreateFileGDB_management(scratch,"scratch.gdb")
 

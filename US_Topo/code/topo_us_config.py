@@ -80,7 +80,7 @@ server_config = server_loc_config(server_config_file,server_environment)
 reportcheckFolder = server_config["reportcheck"]
 noninstantFolder = server_config["noninstant"]
 viewerFolder = server_config["viewer"]
-topouploadurl =  server_config["viewer_upload"] + r"/TopoUpload?ordernumber="
+topouploadurl =  server_config["viewer_upload"] + r"/ErisInt/BIPublisherPortal_prod/Viewer.svc/TopoUpload?ordernumber="
 connectionString = server_config["dbconnection"]
 
 # folders
