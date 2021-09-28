@@ -16,10 +16,10 @@ start1 = timeit.default_timer()
 arcpy.Delete_management(r"in_memory")
 arcpy.env.overwriteOutput = True
 eris_nhdreport_path =r"gptools\NHDReport"
-eris_report_path = r"gptools\ERISReport"
+eris_report_path = r"gptools\ERISDB_Report"
 class Machine:
     machine_test = r"\\cabcvan1gis006"
-    machine_prod = r"\\cabcvan1gis008"
+    machine_prod = r"\\cabcvan1gis007"
 class Credential:
     oracle_test = r"ERIS_GIS/gis295@GMTESTC.glaciermedia.inc"
     oracle_production = r"ERIS_GIS/gis295@GMPRODC.glaciermedia.inc"
@@ -183,9 +183,9 @@ def getStreetList(streetlyr, clip_buffer,unit1):
 if __name__ == '__main__':
     try:
         ##  INPUT ##################
-        orderID = '1129766'# arcpy.GetParameterAsText(0).strip()
-        code ='can'#arcpy.GetParameterAsText(1).strip()#'usa' #
-        scratch =r"C:\Users\JLoucks\Documents\JL\test2"#arcpy.env.scratchFolder#
+        orderID = arcpy.GetParameterAsText(0).strip()
+        code = arcpy.GetParameterAsText(1).strip()#'usa' #
+        scratch = arcpy.env.scratchFolder#
         scratchGDB =os.path.join(scratch,"scratch.gdb")
         arcpy.CreateFileGDB_management(scratch,"scratch.gdb")
 

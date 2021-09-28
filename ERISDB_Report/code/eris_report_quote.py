@@ -310,9 +310,9 @@ def getWorldAerialYear((centroid_X,centroid_Y)):
 if __name__ == '__main__':
     try:
         ##  INPUT ##################715636 715637 715638
-        orderID = '785134'#arcpy.GetParameterAsText(0).strip()
-        code = 'can'#arcpy.GetParameterAsText(1).strip()#
-        scratch = r"C:\Users\JLoucks\Documents\JL\test3"#arcpy.env.scratchFolder#
+        orderID = arcpy.GetParameterAsText(0).strip()
+        code = arcpy.GetParameterAsText(1).strip()#
+        scratch = arcpy.env.scratchFolder#
 
         ## PARAMETERS####################
         orderGeometry = r'orderGeometry.shp'

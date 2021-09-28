@@ -36,10 +36,10 @@ def getStreetList(query, unit1):
 
     if country== 'US':
         streetlyr = r'\\cabcvan1gis007\data\North_American_Street_Map.gdb\Streetcarto'
-        streetFieldName = "StreetName"
+        streetFieldName = 'StreetName'
     else:
         streetlyr = r'\\cabcvan1gis007\data\North_American_Street_Map.gdb\Streetcarto'
-        streetFieldName = "StreetName"
+        streetFieldName = 'StreetName'
 
     try:
         streetLayer = arcpy.mapping.Layer(streetlyr)
@@ -201,8 +201,7 @@ try:
     OrderIDText = arcpy.GetParameterAsText(0) #"1028897"
     # OrderIDText = '1028897'
     Buffer1 = "0.125"
-    scratch = arcpy.env.scratchWorkspace
-    #scratch = arcpy.env.scratchFolder
+    scratch = r'C:\Users\JLoucks\Documents\JL\test3'#arcpy.env.scratchWorkspace
 #------------------------------------------------------------------------------------------------------------------
     count1 = 0
     countI = 0
@@ -543,14 +542,63 @@ try:
      # Process: Add Field for mapkey rank storage based on location and total number of keys at one location
     arcpy.AddField_management(ERIS_sja_final, "MapKeyLoc", "SHORT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
     arcpy.AddField_management(ERIS_sja_final, "MapKeyTot", "SHORT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
-    calMapkey(ERIS_sja_final)
 
     arcpy.AddField_management(ERIS_sja_final, "Direction", "TEXT", "", "", "3", "", "NULLABLE", "NON_REQUIRED", "")
     arcpy.AddField_management(ERIS_sja_final, "ERISID", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
     desc = arcpy.Describe(ERIS_sja_final)
     shapefieldName = desc.ShapeFieldName
-    rows = arcpy.UpdateCursor(ERIS_sja_final)
 
+
+
+    mxd = arcpy.mapping.MapDocument(EnvirScan_config.mxd)
+    df = arcpy.mapping.ListDataFrames(mxd,"*")[0]
+    df.spatialReference = out_coordinate_system
+
+    bufferLayer = arcpy.mapping.Layer(EnvirScan_config.bufferlyrfile)
+    bufferLayer.replaceDataSource(scratch,"SHAPEFILE_WORKSPACE","Buffer1")
+    arcpy.mapping.AddLayer(df,bufferLayer,"Bottom")
+#
+    ds_oids = []
+    rows = arcpy.SearchCursor(ERIS_sja_final)
+    for row in rows:
+        ds_oids.append(int(row.DS_OID))
+    #count1 = len(ds_oids)
+    IncidentDic = {}
+    if 'row' in locals():
+        del row
+    del rows
+    try:
+        con = cx_Oracle.connect(EnvirScan_config.connectionString)
+        cur = con.cursor()
+        for ds_oid in list(set(ds_oids)):
+            cur.execute("select AST.incident_permit from eris_data_source EDS,astm_type_reference AST where eds.ds_oid = %s and eds.at_oid = ast.at_oid and AST.incident_permit is not null and update_status not in ('B','P','I')"%ds_oid)
+            t = cur.fetchone()
+            if t != None:
+                incident_permit = str(t[0])
+                if incident_permit not in IncidentDic.keys():
+                    IncidentDic[incident_permit]= [ds_oid]
+                else:
+                    temp = IncidentDic[incident_permit]
+                    temp.append(ds_oid)
+                    IncidentDic[incident_permit]= temp
+
+    finally:
+        cur.close()
+        con.close()
+    if len(IncidentDic.keys()) == 2:
+        all_dsoids = IncidentDic['PERMIT'] + IncidentDic['INCIDENT']
+    elif len(IncidentDic.keys()) == 1:
+        for i in IncidentDic.keys():
+            all_dsoids = IncidentDic[i]
+    else:
+        all_dsoids = []
+    arcpy.AddMessage('all dsoids: '+str(all_dsoids))
+    with arcpy.da.UpdateCursor(ERIS_sja_final,"DS_OID") as cursor:
+        for row in cursor:
+            if row[0] not in all_dsoids:
+                cursor.deleteRow()
+    calMapkey(ERIS_sja_final)
+    rows = arcpy.UpdateCursor(ERIS_sja_final)
     for row in rows:
         erisid = int(row.getValue("ID_CHAR"))
         row.setValue("ERISID", float(erisid))
@@ -604,44 +652,6 @@ try:
         cur.close()
         con.close()
 
-    mxd = arcpy.mapping.MapDocument(EnvirScan_config.mxd)
-    df = arcpy.mapping.ListDataFrames(mxd,"*")[0]
-    df.spatialReference = out_coordinate_system
-
-    bufferLayer = arcpy.mapping.Layer(EnvirScan_config.bufferlyrfile)
-    bufferLayer.replaceDataSource(scratch,"SHAPEFILE_WORKSPACE","Buffer1")
-    arcpy.mapping.AddLayer(df,bufferLayer,"Bottom")
-#
-    ds_oids = []
-    rows = arcpy.SearchCursor(ERIS_sja_final)
-    for row in rows:
-        ds_oids.append(int(row.DS_OID))
-    #count1 = len(ds_oids)
-    IncidentDic = {}
-    if 'row' in locals():
-        del row
-    del rows
-    try:
-        con = cx_Oracle.connect(EnvirScan_config.connectionString)
-        cur = con.cursor()
-        for ds_oid in list(set(ds_oids)):
-            cur.execute("select AST.incident_permit from eris_data_source EDS,astm_type_reference AST where eds.ds_oid = %s and eds.at_oid = ast.at_oid and AST.incident_permit is not null and update_status not in ('D','B','P','I')"%ds_oid)
-            t = cur.fetchone()
-            if t != None:
-                incident_permit = str(t[0])
-                if incident_permit not in IncidentDic.keys():
-                    IncidentDic[incident_permit]= [ds_oid]
-                else:
-                    temp = IncidentDic[incident_permit]
-                    temp.append(ds_oid)
-                    IncidentDic[incident_permit]= temp
-
-    finally:
-        cur.close()
-        con.close()
-
-
-
     if 'PERMIT' in IncidentDic.keys():
         permitText=' '
         countP = sum([ ds_oids.count(a) for a in IncidentDic['PERMIT']])
@@ -655,6 +665,21 @@ try:
         newLayerERIS.replaceDataSource(scratch, "SHAPEFILE_WORKSPACE", "ErisClip_permit")
         arcpy.mapping.AddLayer(df, newLayerERIS, "TOP")
         arcpy.DeleteFeatures_management('in_memory\\tempP')
+##    if 'INCIDENT' in IncidentDic.keys():
+##        inciText=' '
+##        countI = sum([ ds_oids.count(a) for a in IncidentDic['INCIDENT']])
+##        #for ds_oid in IncidentDic['INCIDENT']:
+##        inciText = str(IncidentDic['INCIDENT']).replace('[','').replace(']','')
+##        #inciText = inciText[:-12]
+##        ErisClip_incident= os.path.join(scratch,"ErisClip_incident.shp")
+##        symbol_incident= os.path.join(scratch,"symbol_incident.shp") #ensure symbology shows when incident included
+##        arcpy.AddMessage("[DS_OID] IN (%s)"%(inciText))
+##        arcpy.Select_analysis(ERIS_sja_final, "in_memory\\tempI", '"DS_OID" IN (%s)'%(inciText))
+##        arcpy.Select_analysis(g_ESRI_variable_26, ErisClip_incident, g_ESRI_variable_22)
+##        newLayerERIS1 = arcpy.mapping.Layer(EnvirScan_config.ERIScanIncident)
+##        newLayerERIS1.replaceDataSource(scratch, "SHAPEFILE_WORKSPACE", "ErisClip_incident")
+##        arcpy.mapping.AddLayer(df, newLayerERIS1, "TOP")
+##        arcpy.DeleteFeatures_management(g_ESRI_variable_26)
     if 'INCIDENT' in IncidentDic.keys():
         inciText=' '
         countI = sum([ ds_oids.count(a) for a in IncidentDic['INCIDENT']])
