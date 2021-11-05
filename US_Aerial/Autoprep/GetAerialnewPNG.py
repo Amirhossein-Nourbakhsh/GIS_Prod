@@ -162,7 +162,7 @@ if __name__ == '__main__':
                     """PNG is copied to gc folder for FE with new naming convention"""
                     if os.path.exists(os.path.join(job_folder,'gc',job_image_name)):
                         os.remove(os.path.join(job_folder,'gc',job_image_name))
-                    if imageuploadpath[-3:] in ['jpg','png','tif']:
+                    if imageuploadpath.split('.')[-1] in ['jpg','png','tif','tiff']:
                         im = Image.open(imageuploadpath)
                         subject_im = im.convert("RGB")
                         subject_im.save(os.path.join(job_folder,'gc',job_image_name))
