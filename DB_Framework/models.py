@@ -5,9 +5,10 @@ import arcpy
 import numpy as np
 import arcpy, os
 from ast import literal_eval
-
+def remove_invalid_char(input_string):
+    correct_string = ''.join(char for char in input_string if char.isalnum())
+    return correct_string
 class Order(object):
-    
     def __init__(self):
         self.id = None
         self.number = None
@@ -15,7 +16,7 @@ class Order(object):
         self.address = None
         self.province = None
         self.country = None
-        self. psr = None
+        self.psr = None
         self.site_name = None
         self.customer_id = None
         self.radius_type = None
@@ -42,7 +43,7 @@ class Order(object):
                 self.number = str(row[0])
                 order_obj.id = input_id
                 order_obj.number = str(row[0])
-                cursor.execute("select geometry_type, geometry, radius_type  from eris_order_geometry where order_id =" + order_obj.id)
+                cursor.execute("select geometry_type, geometry, radius_type  from eris_order_geometry where order_id =" + str(order_obj.id))
 
             else:
                 del cursor 
@@ -61,17 +62,17 @@ class Order(object):
                     cursor.execute("select geometry_type, geometry, radius_type  from eris_order_geometry where order_id =" + order_obj.id)
                 else:
                      return None  
-            order_obj.full_address = str(row[1])+", "+str(row[2])+", "+str(row[3])
-            order_obj.address = str(row[1])
-            order_obj.city = str(row[2])
-            order_obj.province = str(row[3])
-            order_obj.site_name = row[4]
+            order_obj.full_address = remove_invalid_char(str(row[1])+", "+str(row[2])+", "+str(row[3]))
+            order_obj.address = remove_invalid_char(str(row[1]))
+            order_obj.city = remove_invalid_char(str(row[2]))
+            order_obj.province = remove_invalid_char(str(row[3]))
+            order_obj.site_name = remove_invalid_char(row[4])
             order_obj.customer_id = row[5]
             order_obj.company_id = row[6]
-            order_obj.company_desc = row[7]
-            order_obj.project_num = row[8]
-            order_obj.postal_code = row[9]
-            order_obj.country = str(row[10])
+            order_obj.company_desc = remove_invalid_char(row[7])
+            order_obj.project_num = remove_invalid_char(str(row[8]))
+            order_obj.postal_code = remove_invalid_char(str(row[9]))
+            order_obj.country = remove_invalid_char(str(row[10]))
             order_obj.geometry = order_obj.__getGeometry()
             order_obj.spatial_ref_pcs = self.get_sr_pcs()
             order_obj.spatial_ref_gcs = self.spatial_ref_gcs
@@ -84,7 +85,7 @@ class Order(object):
         sr_wgs84 = arcpy.SpatialReference(4326)
         con = cx_Oracle.connect(db_connections.connection_string)
         cursor = con.cursor()
-        sql_statement = "select geometry_type, geometry, radius_type  from eris_order_geometry where order_id =" + self.id
+        sql_statement = "select geometry_type, geometry, radius_type  from eris_order_geometry where order_id =" + str(self.id)
         order_geom = None
         if order_geom == None:
             order_geom = arcpy.Geometry()
@@ -100,7 +101,7 @@ class Order(object):
                 order_geom = arcpy.Polyline(arcpy.Array([arcpy.Point(*coords) for coords in coordinates]), sr_wgs84)
             elif geometry_type.lower() =='polygon':
                 order_geom = arcpy.Polygon(arcpy.Array([arcpy.Point(*coords) for coords in coordinates]), sr_wgs84)
-        return order_geom.projectAs(sr_wgs84)            
+        return order_geom.projectAs(sr_wgs84)          
     @classmethod
     def get_sr_pcs(self):
         centre_point = self.geometry.trueCentroid
@@ -147,7 +148,6 @@ class Order(object):
             del row
             
         return map_keys
-        
 class PSR(object):
     order_id = ''
     omi_id = ''
