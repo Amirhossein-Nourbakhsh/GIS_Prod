@@ -748,9 +748,9 @@ class topo_us_rpt(object):
                     if yeardict.get("photo inspection year") is not None:
                         #year_list.append(yeardict.get("photo inspection year"))
                         year_all_types['photo_inspection_year'] = yeardict.get("photo inspection year")
-
-                    year2use = max([_ for _ in year_all_types.values()])
-                    if year2use == "":
+                    try:
+                        year2use = max([_ for _ in year_all_types.values()])
+                    except ValueError:
                         year2use = row["SourceYear"].strip()
                         arcpy.AddMessage("### cannot determine year of the map from xml...get from csv instead..." + year2use)
 
