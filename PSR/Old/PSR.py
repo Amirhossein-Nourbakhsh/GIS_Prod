@@ -186,7 +186,7 @@ try:
     arcpy.env.OverWriteOutput = True
 
 # LOCAL #######################################################################################################
-    OrderIDText = '1140854'
+    OrderIDText = '1236978'
     scratch_gdb = arcpy.CreateFileGDB_management(scratch_folder,r"scratch_gdb.gdb")   # for tables to make Querytable
     scratch_gdb = os.path.join(scratch_folder,r"scratch_gdb.gdb")
 ###############################################################################################################
