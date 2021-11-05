@@ -571,7 +571,7 @@ try:
         con = cx_Oracle.connect(EnvirScan_config.connectionString)
         cur = con.cursor()
         for ds_oid in list(set(ds_oids)):
-            cur.execute("select AST.incident_permit from eris_data_source EDS,astm_type_reference AST where eds.ds_oid = %s and eds.at_oid = ast.at_oid and AST.incident_permit is not null and update_status not in ('B','P','I')"%ds_oid)
+            cur.execute("select AST.incident_permit from eris_data_source EDS,astm_type_reference AST where eds.ds_oid = %s and eds.at_oid = ast.at_oid and AST.incident_permit is not null and update_status not in ('B','P','I','D')"%ds_oid)
             t = cur.fetchone()
             if t != None:
                 incident_permit = str(t[0])
