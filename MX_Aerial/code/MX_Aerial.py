@@ -15,7 +15,7 @@ mx_aerial_path= r"\\cabcvan1fpr009\MX_aerials"
 mx_aerial_metapath = r"\\cabcvan1fpr009\MX_aerials\MEXtxts"
 outputPath = r"\\cabcvan1fpr004\ERIS\Additional Products\Mexico Aerials"
 chrome_path = 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s'
-url =r"http://gisapp.erisinfo.com/index.html?OrderId=%s"
+url =r"https://gisapp.erisinfo.com/index.html?OrderId=%s"
 mx_aerial_collection = os.listdir(mx_aerial_path)
 mx_aerial_meta_collection = os.listdir(mx_aerial_metapath)
 #-------------------------------------------------------------------------------
