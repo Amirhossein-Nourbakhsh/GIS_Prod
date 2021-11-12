@@ -21,8 +21,8 @@ class ImageBasePath:
 class OutputDirectory:
     job_directory_test = r'\\192.168.136.164\v2_usaerial\JobData\test'
     job_directory_prod = r'\\192.168.136.164\v2_usaerial\JobData\prod'
-    georef_images_test = r'\\cabcvan1fpr436\HISTORICAL-F\Georeferenced_Aerial_test'
-    georef_images_prod = r'\\cabcvan1fpr436\HISTORICAL-F\Georeferenced_Aerial'
+    georef_images_test = r'\\cabcvan1fpr436\HISTORICAL\Georeferenced_Aerial_test'
+    georef_images_prod = r'\\cabcvan1fpr436\HISTORICAL\Georeferenced_Aerial'
 class TransformationType():
     POLYORDER0 = "POLYORDER0"
     POLYORDER1 = "POLYORDER1"
@@ -203,8 +203,8 @@ if __name__ == '__main__':
     ### set input parameters
     order_id = arcpy.GetParameterAsText(0)
     auid = arcpy.GetParameterAsText(1)
-    order_id = '1164857'
-    auid = '7809131'
+    order_id = '1245798'
+    auid = '2940072'
     env = 'prod'
     ## set scratch folder
     scratch_folder = arcpy.env.scratchFolder
