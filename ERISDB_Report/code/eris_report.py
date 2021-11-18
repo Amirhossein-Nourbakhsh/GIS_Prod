@@ -451,7 +451,9 @@ def getMaps(mxd, output_folder,map_name,buffer_dict, buffer_sizes_list,unit_code
             mxd.addLayer(bufferLayer,output_folder,"buffer_%s"%(i))
         if i in buffer_dict.keys()[-3:]:
             mxd.zoomToLayer("Grid") if i == buffer_dict.keys()[-1] and multi_page == True else mxd.zoomToTopLayer()
-            mxd.df.scale = ((int(1.5*mxd.df.scale)/100)+1)*100
+            mxd.df.scale = ((int(1.1*mxd.df.scale)/100)+1)*100
+            if mxd.df.scale == 5000: #bug with baselayer not rendering at 1:5k reference production order id with issue 1239269
+                mxd.df.scale = 5100
             unit = 'Kilometer' if unit_code ==9036 else 'Mile'
             mxd.addTextoMap("Map","Map: %s %s Radius"%(buffer_sizes_list[i],unit))
             arcpy.mapping.ExportToPDF(mxd.mxd,os.path.join(output_folder,map_name%(i)))
