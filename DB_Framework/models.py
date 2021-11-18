@@ -4,9 +4,10 @@ import db_connections
 import arcpy
 import numpy as np
 import arcpy, os
+import string
 from ast import literal_eval
 def remove_invalid_char(input_string):
-    correct_string = ''.join(char for char in input_string if char.isalnum())
+    correct_string = ''.join(char for char in input_string if char  in string.printable) 
     return correct_string
 class Order(object):
     def __init__(self):
@@ -44,7 +45,6 @@ class Order(object):
                 order_obj.id = input_id
                 order_obj.number = str(row[0])
                 cursor.execute("select geometry_type, geometry, radius_type  from eris_order_geometry where order_id =" + str(order_obj.id))
-
             else:
                 del cursor 
                 del row
