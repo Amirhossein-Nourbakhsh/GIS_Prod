@@ -12,6 +12,7 @@ import timeit,os,arcpy,cx_Oracle
 import json
 import contextlib
 import urllib
+import shutil
 class Credential:
     oracle_test = r"ERIS_GIS/gis295@GMTESTC.glaciermedia.inc"
     oracle_production = r"ERIS_GIS/gis295@GMPRODC.glaciermedia.inc"
@@ -149,7 +150,7 @@ def copyImgtoInhouse(img_name):
             arcpy.Delete_management(os.path.join(georeference_folder,'bk',timestamp+img_name))
             arcpy.Copy_management(os.path.join(georeference_folder,img_name),os.path.join(georeference_folder,'bk',timestamp+img_name))
             arcpy.Delete_management(os.path.join(georeference_folder,img_name))
-        arcpy.Copy_management(os.path.join(work_folder_geo,img_name),os.path.join(georeference_folder,img_name))
+        shutil.copy(os.path.join(work_folder_geo,img_name),os.path.join(georeference_folder,img_name))
         status = 'Done'
     else:
         arcpy.AddError("image is not found or georeferenced or image name is bad: %s"%img_name)
