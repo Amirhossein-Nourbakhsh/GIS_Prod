@@ -23,6 +23,8 @@ class OutputDirectory:
     job_directory_prod = r'\\192.168.136.164\v2_usaerial\JobData\prod'
     georef_images_test = r'\\cabcvan1fpr436\HISTORICAL\Georeferenced_Aerial_test'
     georef_images_prod = r'\\cabcvan1fpr436\HISTORICAL\Georeferenced_Aerial'
+    georef_mosaic_test = r'\\cabcvan1fpr436\HISTORICAL\Georeferenced_Mosaic_test'
+    georef_mosaic_prod = r'\\cabcvan1fpr436\HISTORICAL\Georeferenced_Mosaic'
 class TransformationType():
     POLYORDER0 = "POLYORDER0"
     POLYORDER1 = "POLYORDER1"
@@ -203,8 +205,6 @@ if __name__ == '__main__':
     ### set input parameters
     order_id = arcpy.GetParameterAsText(0)
     auid = arcpy.GetParameterAsText(1)
-    order_id = '1245798'
-    auid = '2940072'
     env = 'prod'
     ## set scratch folder
     scratch_folder = arcpy.env.scratchFolder
@@ -251,6 +251,7 @@ if __name__ == '__main__':
                     arcpy.AddWarning('There is no data for Image in inventory!')
                     arcpy.AddWarning(aerial_us_inventory[2])
                 else:
+                    collection_type = aerial_inventoryjson[0]['IMAGE_COLLECTION_TYPE'].lower().split('_')[0]
                     image_input_path_inv = aerial_inventoryjson[0]['ORIGINAL_IMAGEPATH'] # image path from inventory  RAW_IMAGEPATH
                     result_input_image_job = os.path.join(job_folder,'gc',aerial_georefjson['imgname'])
                     order_geometry = os.path.join(job_folder,'OrderGeometry.shp')
@@ -263,11 +264,7 @@ if __name__ == '__main__':
                     if os.path.exists(result_input_image_job): ## this is the image which is alreary georeferenced by us aerial app
                         input_image = result_input_image_job
                     else: # read from inventory
-                        # make a copy of raw image in the local folder beacuse the TAB file along with image format on server make arcgis confused
-                        parts = os.path.basename(image_input_path_inv).split('.')
-                        input_raw_image_name = "".join(parts[:-1]) + '_raw' + '.' + parts[-1]
-                        shutil.copy(image_input_path_inv, os.path.join(scratch_folder,input_raw_image_name))
-                        input_image = os.path.join(scratch_folder,input_raw_image_name)
+                        arcpy.AddMessage('Input image is not availabe in the job folder!')
                     arcpy.AddMessage('Input Image : %s' % input_image)
                     gcp_points = CoordToString(aerial_georefjson['envelope']) # footPrint
                     ### Source point from input extent
@@ -277,7 +274,10 @@ if __name__ == '__main__':
                     bottom = str(arcpy.GetRasterProperties_management(input_image,"BOTTOM").getOutput(0))
                     src_points = "'" + left + " " + bottom + "';" + "'" + right + " " + bottom + "';" + "'" + right + " " + top + "';" + "'" + left + " " + top + "'"
                     ### Georeferencing
-                    img_georeferenced = apply_georeferencing(input_image, src_points, gcp_points,OutputDirectory.georef_images_prod, out_img_name, '', ResamplingType.BILINEAR)
+                    if collection_type != 'mosaic':
+                        img_georeferenced = apply_georeferencing(input_image, src_points, gcp_points,OutputDirectory.georef_images_prod, out_img_name, '', ResamplingType.BILINEAR)
+                    else:
+                        img_georeferenced = apply_georeferencing(input_image, src_points, gcp_points,OutputDirectory.georef_mosaic_prod, out_img_name, '', ResamplingType.BILINEAR)
                     ### ExportToOutputs
                     export_to_outputs(env,img_georeferenced, jpg_image_folder,out_img_name,order_geometry)
                     

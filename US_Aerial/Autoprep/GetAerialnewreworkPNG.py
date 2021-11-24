@@ -126,18 +126,19 @@ if __name__ == '__main__':
     AUI_ID = arcpy.GetParameterAsText(1)#''#arcpy.GetParameterAsText(1)
     ee_oid = arcpy.GetParameterAsText(2)#''#arcpy.GetParameterAsText(2)#'408212'#arcpy.GetParameterAsText(2)
     scratch = arcpy.env.scratchFolder#r'C:\Users\JLoucks\Documents\JL\test2'#arcpy.env.scratchFolder
-    job_directory = r'\\192.168.136.164\v2_usaerial\JobData\prod'
+    job_directory = r'\\cabcvan1eap003\v2_usaerial\JobData\prod'
+    init_env = 'prod'
     arcpy.env.OverwriteOutput = True
     Image.MAX_IMAGE_PIXELS = 10000000000
 
-    orderInfo = Oracle('prod').call_function('getorderinfo',OrderID)
+    orderInfo = Oracle(init_env).call_function('getorderinfo',OrderID)
     OrderNumText = str(orderInfo['ORDER_NUM'])
     job_folder = os.path.join(job_directory,OrderNumText)
     uploaded_dir = os.path.join(job_folder,"OrderImages")
 
     ### Get image path info ###
     inv_infocall = str({"PROCEDURE":Oracle.erisapi_procedures['getreworkaerials'],"ORDER_NUM":str(OrderNumText),"AUI_ID":str(AUI_ID),"PARENT_EE_OID":str(ee_oid)})
-    rework_return = Oracle('prod').call_erisapi(inv_infocall)
+    rework_return = Oracle(init_env).call_erisapi(inv_infocall)
     rework_list_json = json.loads(rework_return[1])
     print rework_list_json
     if rework_list_json == []:
@@ -154,8 +155,8 @@ if __name__ == '__main__':
             imagecollection = image['IMAGE_COLLECTION_TYPE']
             originalpath = image['ORIGINAL_IMAGE_PATH']
             imageuploadpath = originalpath
-            if imagecollection == 'DOQQ':
-                arcpy.AddWarning('Cannot convert DOQQ image '+originalpath)
+            if imagecollection.split('_')[0].lower() in ['doqq','mosaic'] and imagecollection.lower() != 'mosaic_index':
+                arcpy.AddWarning('Cannot convert mosaic image '+originalpath)
             else:
                 if os.path.exists(originalpath):
                     job_image_name = str(aerialyear)+'_'+imagesource+'_'+str(auid)+'.jpg'
@@ -174,7 +175,7 @@ if __name__ == '__main__':
                             os.remove(os.path.join(job_folder,'gc',job_image_name))
                         shutil.copy(os.path.join(scratch,job_image_name),os.path.join(job_folder,'gc',job_image_name))
                     rename_call = str({"PROCEDURE":Oracle.erisapi_procedures['setimagename'],"ORDER_NUM":OrderNumText,"AUI_ID":auid,"IMAGE_NAME":str(new_image_name)})
-                    rename_return = Oracle('prod').call_erisapi(rename_call)
+                    rename_return = Oracle(init_env).call_erisapi(rename_call)
                     print json.loads(rework_return[1])
                 elif not os.path.exists(originalpath):
                     arcpy.AddError('cannot find image in inventory to convert, PLEASE CHECK PATH: '+originalpath)

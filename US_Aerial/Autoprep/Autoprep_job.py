@@ -165,7 +165,7 @@ def createGeometry(pntCoords,geometry_type,output_folder,output_name, spatialRef
     del cursor
     return outputSHP
 def getclipflag(collectiontype,mxd,df,geo_extent,jpg_image,image_year):
-    if image_collection != 'DOQQ':
+    if image_collection.split('_')[0].lower() not in ['doqq','mosaic']:
         df.extent = geo_extent
         df.scale = 25000
         w_res = 1275
@@ -177,7 +177,7 @@ def getclipflag(collectiontype,mxd,df,geo_extent,jpg_image,image_year):
             return ['Y',clip_size]
         else:
             return ['N',clip_size]
-    elif image_collection == 'DOQQ' and int(image_year) > 2005:
+    elif image_collection.split('_')[0].lower() in ['doqq','mosaic'] and int(image_year) > 2005:
         clip_size = os.path.getsize(os.path.join(jpg_image_folder,jpg_image))
         if clip_size <= 1000000:
             return ['Y',clip_size]
@@ -191,6 +191,7 @@ def getclipflag(collectiontype,mxd,df,geo_extent,jpg_image,image_year):
             return ['N',clip_size]
 def export_reportimage(imagepath,ordergeometry,auid):
     ## In memory
+    arcpy.AddMessage('prepping: '+imagepath)
     if os.path.exists(imagepath) == False:
         arcpy.AddWarning(imagepath+' DOES NOT EXIST')
     else:
@@ -211,33 +212,55 @@ def export_reportimage(imagepath,ordergeometry,auid):
         image_extent = image_layer.getExtent()
         geo_extent = geometry_layer.getExtent()
         df.extent = geo_extent
-        if image_collection == 'DOQQ':
+        if image_collection.split('_')[0].lower() in ['doqq','mosaic']:
                 if int(image_year) in list(range(1990,2006)):
                     df.scale = 62500*1.3 #multiply by 30% to compensate for inaccurate scaling on web mercator projection. 62500 is the scale for 1 quadrangle
-                    w_res = 5100
-                    h_res = 6600
+                    if r'10.6.246.73' in imagepath:
+                        w_res= 800
+                    else:
+                        w_res = 5100
+                        h_res = 6600
                 elif df.scale > 62500:
                     df.extent = geo_extent
                     df.scale = df.scale * 1.0
                     try:
-                        w_res = 2550
+                        if r'10.6.246.73' in imagepath:
+                            w_res= 800
+                        else:
+                            w_res = 2550
                         h_res= int((geo_extent.height/geo_extent.width)*w_res)
                     except ZeroDivisionError:
-                        w_res = 2550
-                        h_res = 3300
+                        if r'10.6.246.73' in imagepath:
+                            w_res= 800
+                            h_res = 1000
+                        else:
+                            w_res = 2550
+                            h_res = 3300
                 else:
                     df.scale = 25000
-                    w_res = 2550
-                    h_res = 3300
-        elif image_collection != 'DOQQ':
+                    if r'10.6.246.73' in imagepath:
+                        w_res= 800
+                        h_res = 1000
+                    else:
+                        w_res = 2550
+                        h_res = 3300
+        elif image_collection.split('_')[0].lower() not in ['doqq','mosaic']:
             df.extent = image_extent
-            df.scale = ((df.scale/100))*85 #very important setting as it defines how much of the image will be displayed to FE
+            df.scale = ((df.scale/100))*95 #very important setting as it defines how much of the image will be displayed to FE
             try:
-                w_res=7140
+                #w_res=7140
+                if r'10.6.246.73' in imagepath:
+                    w_res= 800
+                else:
+                    w_res= 4000
                 h_res= int((image_extent.height/image_extent.width)*w_res)
             except ZeroDivisionError:
-                w_res = 5100
-                h_res = 6600
+                if r'10.6.246.73' in imagepath:
+                    w_res= 800
+                    h_res = 1000
+                else:
+                    w_res = 3570
+                    h_res = 4620
         print image_extent.width, image_extent.height
         print w_res, h_res
         arcpy.RefreshActiveView()
@@ -254,7 +277,7 @@ def export_reportimage(imagepath,ordergeometry,auid):
         arcpy.DefineProjection_management(os.path.join(jpg_image_folder,jpg_image),sr2)
         extent =arcpy.Describe(os.path.join(jpg_image_folder,jpg_image)).extent
         if AUI_ID == '':
-            clip_stats = getclipflag(image_collection,mxd,df,geo_extent,jpg_image)
+            clip_stats = getclipflag(image_collection,mxd,df,geo_extent,jpg_image,image_year)
             clip_flag = clip_stats[0]
             clip_size = clip_stats[1]
         else:
@@ -262,47 +285,26 @@ def export_reportimage(imagepath,ordergeometry,auid):
             clip_size = 0
         try:
             image_extents = str({"PROCEDURE":Oracle.erisapi_procedures['passclipextent'], "ORDER_NUM" : OrderNumText,"AUI_ID":auid,"SWLAT":str(extent.YMin),"SWLONG":str(extent.XMin),"NELAT":(extent.YMax),"NELONG":str(extent.XMax),"INVALID_CLIPIMG_FLAG":clip_flag,"CLIP_IMG_SIZE":str(clip_size)})
-            message_return = Oracle('prod').call_erisapi(image_extents)
+            message_return = Oracle(init_env).call_erisapi(image_extents)
             if message_return[3] != 'Y':
                 raise OracleBadReturn
         except OracleBadReturn:
             arcpy.AddError('status: '+message_return[3]+' - '+message_return[2])
         mxd.saveACopy(os.path.join(scratch,auid+'_export.mxd'))
         del mxd
-# def best_imageperyear(image_workspace):
-#     allyears = []
-#     max_size_by_year = {}
-#     for file in os.listdir(image_workspace):
-#         if file.endswith('.jpg'):
-#             year = file.split('_')[0]
-#             allyears.append(year)
-#     for year in list(dict.fromkeys(allyears)):
-#         maxsize = 0
-#         for image in os.listdir(image_workspace):
-#             if image.endswith('.jpg') and year == image.split('_')[0]:
-#                 auid = image.split('_')[-1].replace('.jpg','')
-#                 size = os.stat(os.path.join(image_workspace,image)).st_size
-#                 if size>maxsize:
-#                     maxsize = size
-#                     max_size_by_year[year] = auid
-#     return max_size_by_year
-
-
-
-
 
 if __name__ == '__main__':
     start = timeit.default_timer()
     orderID = arcpy.GetParameterAsText(0)#'1058321'#arcpy.GetParameterAsText(0)
     AUI_ID = arcpy.GetParameterAsText(1)#''#arcpy.GetParameterAsText(1)
-    scratch = arcpy.env.scratchFolder
-    job_directory = r'\\192.168.136.164\v2_usaerial\JobData\prod'
+    scratch = arcpy.env.scratchFolder#r'C:\Users\JLoucks\Documents\JL\psr2'#arcpy.env.scratchFolder
+    job_directory = r'\\cabcvan1eap003\v2_usaerial\JobData\prod'
     mxdexport_template = r'\\cabcvan1gis007\gptools\Aerial_US\mxd\Aerial_US_Export.mxd'
-    Conversion_URL = r'http://erisservice3.ecologeris.com/ErisInt/USAerialAppService_prod/USAerial.svc/USAerialImagePromote_temp?inputfile='
+    init_env = 'prod'
     MapScale = 6000
 
     ##get info for order from oracle
-    orderInfo = Oracle('prod').call_function('getorderinfo',orderID)
+    orderInfo = Oracle(init_env).call_function('getorderinfo',orderID)
     OrderNumText = str(orderInfo['ORDER_NUM'])
 
     ## Get order geometry & mxd
@@ -313,12 +315,12 @@ if __name__ == '__main__':
     if AUI_ID == '':
         ## Return aerial list from oracle
         oracle_autoprep = str({"PROCEDURE":Oracle.erisapi_procedures['getaeriallist'],"ORDER_NUM":OrderNumText})
-        aerial_list_return = Oracle('prod').call_erisapi(oracle_autoprep)
+        aerial_list_return = Oracle(init_env).call_erisapi(oracle_autoprep)
         aerial_list_json = json.loads(aerial_list_return[1])
 
         ## Seperate processes for singleframe and DOQQ
         single_image_candidates = aerial_list_json['INHOUSE_IMAGE']
-        doqq_image_candidates = aerial_list_json['DOQQ_IMAGE']
+        mosaic_image_candidates = aerial_list_json['DOQQ_IMAGE']+aerial_list_json['MOSAIC_IMAGE']
         index_image_candidates = aerial_list_json['INDEX_IMAGES']
 
         ##Create job folder and copy images
@@ -331,7 +333,7 @@ if __name__ == '__main__':
             os.mkdir(org_image_folder)
             os.mkdir(jpg_image_folder)
             OrderGeometry = createGeometry(eval(orderInfo[u'ORDER_GEOMETRY'][u'GEOMETRY'])[0],orderInfo['ORDER_GEOMETRY']['GEOMETRY_TYPE'],job_folder,'OrderGeometry.shp')
-            if len(doqq_image_candidates) == 0 and len(single_image_candidates) == 0:
+            if len(mosaic_image_candidates) == 0 and len(single_image_candidates) == 0:
                 raise NoAvailableImage
             if len(single_image_candidates) == 0:
                 arcpy.AddWarning('No singleframe image candidates')
@@ -350,10 +352,10 @@ if __name__ == '__main__':
                         export_reportimage(image_name,OrderGeometry,image_auid)
 
 
-                if len(doqq_image_candidates) == 0:
+                if len(mosaic_image_candidates) == 0:
                     arcpy.AddWarning('No DOQQ image candidates')
 
-                for inhouse_image in doqq_image_candidates:
+                for inhouse_image in mosaic_image_candidates:
                     image_auid = str(inhouse_image['AUI_ID'])
                     image_name = inhouse_image['ORIGINAL_IMAGEPATH']
                     image_year = str(inhouse_image['AERIAL_YEAR'])
@@ -386,11 +388,11 @@ if __name__ == '__main__':
     else:
         AUI_IDtext = str(AUI_ID)
         oracle_singleprep = str({"PROCEDURE":Oracle.erisapi_procedures['getaeriallist'],"ORDER_NUM":OrderNumText,"AUI_ID":AUI_IDtext})
-        aerial_list_return = Oracle('prod').call_erisapi(oracle_singleprep)
+        aerial_list_return = Oracle(init_env).call_erisapi(oracle_singleprep)
         aerial_list_json = json.loads(aerial_list_return[1])
 
         single_image_candidates = aerial_list_json['INHOUSE_IMAGE']
-        doqq_image_candidates = aerial_list_json['DOQQ_IMAGE']
+        mosaic_image_candidates = aerial_list_json['DOQQ_IMAGE']+aerial_list_json['MOSAIC_IMAGE']
         index_image_candidates = aerial_list_json['INDEX_IMAGES']
 
         if os.path.exists(job_folder) == False:
@@ -411,8 +413,8 @@ if __name__ == '__main__':
                 if image_source == '':
                     image_source = ''
                 export_reportimage(image_name,OrderGeometry,image_auid)
-        elif len(doqq_image_candidates) == 1:
-            for inhouse_image in doqq_image_candidates:
+        elif len(mosaic_image_candidates) == 1:
+            for inhouse_image in mosaic_image_candidates:
                 image_auid = str(inhouse_image['AUI_ID'])
                 image_name = inhouse_image['ORIGINAL_IMAGEPATH']
                 image_year = str(inhouse_image['AERIAL_YEAR'])

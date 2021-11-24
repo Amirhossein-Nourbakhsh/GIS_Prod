@@ -184,7 +184,7 @@ def set_imagedetail(extent,centerlat,centerlong,fin_image_name):
         image_extents = str({"PROCEDURE":Oracle.erisapi_procedures['passreportextent'], "ORDER_NUM" : OrderNumText,"TYPE":"ae_pdf",
         "SWLAT":str(extent.YMin),"SWLONG":str(extent.XMin),"NELAT":str(extent.YMax),"NELONG":str(extent.XMax),"SELAT":str(extent.YMin),"SELONG":str(extent.XMax),"NWLAT":str(extent.YMax),"NWLONG":str(extent.XMin),"FILENAME":str(fin_image_name),
         "CENTERLAT" : str(centerlat), "CENTERLONG":str(centerlong), "IMAGE_WIDTH":"","IMAGE_HEIGHT":"",})
-        message_return = Oracle('prod').call_erisapi(image_extents)
+        message_return = Oracle(init_env).call_erisapi(image_extents)
         if message_return[3] != 'Y':
             raise OracleBadReturn
     except OracleBadReturn:
@@ -261,7 +261,6 @@ def export_geotiff(imagedict,ordergeometry,image_comment):
     arcpy.mapping.AddLayer(df,geo_lyr,'TOP')
     ordered_all_values = imagedict.keys()
     ordered_all_values.sort()
-    print ordered_all_values
     for order_value in ordered_all_values:
         auid = imagedict[order_value][0]
         image_source = imagedict[order_value][1]
@@ -300,7 +299,6 @@ def export_geotiff(imagedict,ordergeometry,image_comment):
     arcpy.env.pyramid = "NONE"
     arcpy.mapping.ExportToTIFF(mxd,os.path.join(job_fin,report_image_name),df,df_export_width=export_width,df_export_height=export_height,world_file=False,color_mode = '24-BIT_TRUE_COLOR', tiff_compression='LZW',geoTIFF_tags=True)
     arcpy.DefineProjection_management(os.path.join(job_fin,report_image_name),sr)
-    print "projecting"
     wgs84mxd = arcpy.mapping.MapDocument(wgs84_template)
     image_report = arcpy.mapping.Layer(os.path.join(job_fin,report_image_name))
     df = arcpy.mapping.ListDataFrames(wgs84mxd,'*')[0]
@@ -333,7 +331,7 @@ def export_frame(imagedict,ordergeometry,buffergeometry):
             else:
                 sr = arcpy.SpatialReference(int(FactoryCode))
             fin_image_name = os.path.join(job_fin,image_name)
-            if image_collection == 'DOQQ':
+            if image_collection.split('_')[0].lower() in ['doqq','mosaic']:
                 arcpy.overwriteOutput = True
                 mxd = arcpy.mapping.MapDocument(mxdexport_template)
                 df = arcpy.mapping.ListDataFrames(mxd,'*')[0]
@@ -363,15 +361,7 @@ def export_frame(imagedict,ordergeometry,buffergeometry):
                 bandcount = desc.bandcount
                 arcpy.env.compression = "LZW"
                 arcpy.env.pyramid = "NONE"
-                #arcpy.Clip_management(imagepath,'%s %s %s %s'%(geo_extent.XMin,geo_extent.YMin,geo_extent.YMax,geo_extent.XMax),os.path.join(job_fin,image_year + '_' + image_source + '_' +str(image_per_year) + '.tif'), maintain_clipping_extent = 'NO_MAINTAIN_EXTENT')
-                #arcpy.Clip_management(imagepath,'%s %s %s %s'%(geo_extent.XMin,geo_extent.YMin,geo_extent.YMax,geo_extent.XMax),os.path.join(job_fin,image_year + '_' + image_source + '_' +str(image_per_year) + '.tif'), maintain_clipping_extent = 'NO_MAINTAIN_EXTENT')
                 arcpy.Clip_management(imagepath,'#',fin_image_name,in_template_dataset=buffergeometry,clipping_geometry="NONE", maintain_clipping_extent = 'NO_MAINTAIN_EXTENT')
-                #arcpy.ProjectRaster_management(os.path.join(job_fin,image_year + '_' + image_source + '_' +str(image_per_year) + '.tif'),os.path.join(job_fin,image_year + '_' + image_source + '_' +str(image_per_year) + '2.tif'),sr,'BILINEAR')
-                # if bandcount == 1:
-                #     arcpy.mapping.ExportToTIFF(mxd,os.path.join(job_fin,image_year + '_' + image_source + '_' +str(image_per_year) + '.tif'),df,df_export_width=w_res,df_export_height=h_res,world_file=True,color_mode = '8-BIT_GRAYSCALE',tiff_compression = 'NONE')
-                # else:
-                #     arcpy.mapping.ExportToTIFF(mxd,os.path.join(job_fin,image_year + '_' + image_source + '_' +str(image_per_year) + '.tif'),df,df_export_width=w_res,df_export_height=h_res,world_file=True,color_mode = '24-BIT_TRUE_COLOR',tiff_compression = 'NONE')
-                # arcpy.DefineProjection_management(os.path.join(job_fin,image_year + '_' + image_source + '_' +str(image_per_year) + '.tif'),sr)
                 mxd.saveACopy(os.path.join(scratch,auid+'_export.mxd'))
                 del mxd
             else:
@@ -400,16 +390,15 @@ if __name__ == '__main__':
     UserMapScale = arcpy.GetParameterAsText(2)
     FactoryCode = arcpy.GetParameterAsText(3)
     scratch = arcpy.env.scratchFolder
-    job_directory = r'\\192.168.136.164\v2_usaerial\JobData\prod'
+    job_directory = r'\\cabcvan1eap003\v2_usaerial\JobData\prod'
     mxdexport_template = r'\\cabcvan1gis007\gptools\Aerial_US\mxd\Aerial_US_Export_new.mxd'
     wgs84_template = r'\\cabcvan1gis007\gptools\Aerial_US\mxd\wgs84_template.mxd'
+    init_env = 'prod'
     arcpy.env.overwriteOutput=True
 
     ##get info for order from oracle
-    orderInfo = Oracle('prod').call_function('getorderinfo',orderID)
+    orderInfo = Oracle(init_env).call_function('getorderinfo',orderID)
     OrderNumText = str(orderInfo['ORDER_NUM'])
-    print eval(orderInfo['ORDER_GEOMETRY']['CENTROID'])[0][0][0]
-    print eval(orderInfo['ORDER_GEOMETRY']['CENTROID'])[0][0][1]
     job_folder = os.path.join(job_directory,OrderNumText)
 
     ## Get order geometry and centroid
@@ -422,7 +411,7 @@ if __name__ == '__main__':
     wgs84_template = os.path.join(scratch,'wgs84.mxd')
 
     oracle_input = str({"PROCEDURE":Oracle.erisapi_procedures['getselectedimages'],"ORDER_NUM":OrderNumText})
-    selected_list_return = Oracle('prod').call_erisapi(oracle_input)
+    selected_list_return = Oracle(init_env).call_erisapi(oracle_input)
     selected_list_json = json.loads(selected_list_return[1])
     #print selected_list_json
     ##create fin directory

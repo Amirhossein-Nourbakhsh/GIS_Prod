@@ -1,4 +1,4 @@
-import os, arcpy, shutil
+import os, arcpy, shutil, time
 import cx_Oracle
 import json
 
@@ -157,27 +157,28 @@ def export_reportimage(imagepath,auid):
         del mxd
 
 if __name__ == '__main__':
-    OrderID = arcpy.GetParameterAsText(0)#'934404'#arcpy.GetParameterAsText(0)
-    AUI_ID = arcpy.GetParameterAsText(1)
-    ee_oid = arcpy.GetParameterAsText(2)
+    OrderID = '1254209'#arcpy.GetParameterAsText(0)#'934404'#arcpy.GetParameterAsText(0)
+    AUI_ID = '8130420'#arcpy.GetParameterAsText(1)
+    ee_oid = ''#arcpy.GetParameterAsText(2)
     scratch = arcpy.env.scratchFolder
     arcpy.env.overwriteOutput = True
     arcpy.CreateFileGDB_management(scratch, 'temp.gdb')
     arcpy.env.workspace = os.path.join(scratch,'temp.gdb')
     job_directory = r'\\192.168.136.164\v2_usaerial\JobData\prod'
     georeferenced_historical = r'\\cabcvan1fpr436\HISTORICAL\Georeferenced_Aerial'
-    georeferenced_doqq = r'\\cabcvan1nas003\doqq\Georeferenced_DOQQ'
+    georeferenced_mosaic = r'\\cabcvan1fpr436\HISTORICAL\Georeferenced_Mosaic'
     mxdexport_template = r'\\cabcvan1gis007\gptools\Aerial_US\mxd\Aerial_US_Export.mxd'
+    init_env = 'prod'
     arcpy.env.OverwriteOutput = True
 
-    orderInfo = Oracle('prod').call_function('getorderinfo',OrderID)
+    orderInfo = Oracle(init_env).call_function('getorderinfo',OrderID)
     OrderNumText = str(orderInfo['ORDER_NUM'])
     job_folder = os.path.join(job_directory,OrderNumText)
     uploaded_dir = os.path.join(job_folder,"OrderImages")
 
     ### Get image path info ###
     inv_infocall = str({"PROCEDURE":Oracle.erisapi_procedures['getreworkaerials'],"ORDER_NUM":str(OrderNumText),"AUI_ID":str(AUI_ID),"PARENT_EE_OID":str(ee_oid)})
-    rework_return = Oracle('prod').call_erisapi(inv_infocall)
+    rework_return = Oracle(init_env).call_erisapi(inv_infocall)
     rework_list_json = json.loads(rework_return[1])
     print rework_list_json
 
@@ -198,7 +199,7 @@ if __name__ == '__main__':
                 job_image_name = str(aerialyear)+'_'+imagesource+'_'+str(auid)+'.'+str(originalpath[-5:].split('.')[1])
                 TAB_image_name = str(aerialyear)+'_'+imagesource+'_'+str(auid)+'.TAB'
 
-                if imagecollection == 'DOQQ':
+                if imagecollection.split('_')[0].lower() in ['doqq','mosaic']:
                     sr = arcpy.Describe(imageuploadpath).spatialReference
                     mosaicfp = os.path.join(scratch,'image_boundary.shp')
                     arcpy.CreateMosaicDataset_management(os.path.join(scratch,'temp.gdb'), 'raster', 4326)
@@ -221,13 +222,14 @@ if __name__ == '__main__':
                     arcpy.AddMessage(result_right)
                     #Rename image and TAB
                     if os.path.exists(TAB_upload_path):
-                        shutil.copy(os.path.join(TAB_upload_path),os.path.join(georeferenced_doqq,TAB_image_name)) #copy TAB if exists
+                        shutil.copy(os.path.join(TAB_upload_path),os.path.join(georeferenced_mosaic,TAB_image_name)) #copy TAB if exists
                     #Copy image to inventory folder/
                     arcpy.Copy_management(originalpath,os.path.join(scratch,job_image_name))
-                    if os.path.exists(os.path.join(georeferenced_doqq,job_image_name)):
-                        arcpy.Delete_management(os.path.join(georeferenced_doqq,job_image_name))
-                    arcpy.Copy_management(os.path.join(scratch,job_image_name),os.path.join(georeferenced_doqq,job_image_name))
-                    image_inv_path = os.path.join(georeferenced_doqq,job_image_name)
+                    if os.path.exists(os.path.join(georeferenced_mosaic,job_image_name)):
+                        arcpy.Delete_management(os.path.join(georeferenced_mosaic,job_image_name))
+                    #arcpy.Copy_management(os.path.join(scratch,job_image_name),os.path.join(georeferenced_mosaic,job_image_name))
+                    shutil.copy(os.path.join(scratch,job_image_name),os.path.join(georeferenced_mosaic,job_image_name))
+                    image_inv_path = os.path.join(georeferenced_mosaic,job_image_name)
                 else:
                     sr = arcpy.Describe(imageuploadpath).spatialReference
                     if sr.name == 'GCS_Unknown':
@@ -257,19 +259,29 @@ if __name__ == '__main__':
                     arcpy.AddMessage(result_left)
                     arcpy.AddMessage(result_right)
                     #Rename image and TAB
-                    if os.path.exists(TAB_upload_path):
-                        shutil.copy(TAB_upload_path,os.path.join(georeferenced_historical,TAB_image_name)) #copy TAB if exists
-                    #Copy image to inventory folder/
-                    arcpy.Copy_management(originalpath,os.path.join(scratch,job_image_name))
-                    if os.path.exists(os.path.join(georeferenced_historical,job_image_name)):
-                        arcpy.Delete_management(os.path.join(georeferenced_historical,job_image_name))
-                    arcpy.Copy_management(os.path.join(scratch,job_image_name),os.path.join(georeferenced_historical,job_image_name))
+                    try:
+                        if os.path.exists(TAB_upload_path):
+                            shutil.copy(TAB_upload_path,os.path.join(georeferenced_historical,TAB_image_name)) #copy TAB if exists
+                        #Copy image to inventory folder/
+                        arcpy.Copy_management(originalpath,os.path.join(scratch,job_image_name))
+                        if os.path.exists(os.path.join(georeferenced_historical,job_image_name)):
+                            arcpy.Delete_management(os.path.join(georeferenced_historical,job_image_name))
+                        arcpy.Copy_management(os.path.join(scratch,job_image_name),os.path.join(georeferenced_historical,job_image_name))
+                    except Exception:
+                        time.sleep(20)
+                        if os.path.exists(TAB_upload_path):
+                            shutil.copy(TAB_upload_path,os.path.join(georeferenced_historical,TAB_image_name)) #copy TAB if exists
+                        #Copy image to inventory folder/
+                        arcpy.Copy_management(originalpath,os.path.join(scratch,job_image_name))
+                        if os.path.exists(os.path.join(georeferenced_historical,job_image_name)):
+                            arcpy.Delete_management(os.path.join(georeferenced_historical,job_image_name))
+                        arcpy.Copy_management(os.path.join(scratch,job_image_name),os.path.join(georeferenced_historical,job_image_name))
                     image_inv_path = os.path.join(georeferenced_historical,job_image_name)                
                 image_metadata = str({"PROCEDURE":Oracle.erisapi_procedures['passimagedetail'],"ORDER_NUM":OrderNumText,"AUI_ID":str(auid),"SWLAT":str(result_bot),"SWLONG":str(result_left),"NELAT":str(result_top),"NELONG":str(result_right),"SPATIAL_RESOLUTION":str(spatial_res),"ORIGINAL_IMAGE_PATH":str(image_inv_path)})
-                Oracle('prod').call_erisapi(image_metadata)
+                Oracle(init_env).call_erisapi(image_metadata)
                 new_image_name = str(aerialyear)+'_'+imagesource+'_'+str(auid)+'.'+imagename.split('.')[1]
                 rename_call = str({"PROCEDURE":Oracle.erisapi_procedures['setimagename'],"ORDER_NUM":OrderNumText,"AUI_ID":auid,"IMAGE_NAME":str(new_image_name)})
-                rename_return = Oracle('prod').call_erisapi(rename_call)
+                rename_return = Oracle(init_env).call_erisapi(rename_call)
                 print json.loads(rework_return[1])
     except IOError as e:
         arcpy.AddError('Issue converting image: '+e.message)
