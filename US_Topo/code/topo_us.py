@@ -59,7 +59,7 @@ if __name__ == '__main__':
         logger,handler = tf.log(cfg.logfile, cfg.logname)
 
         # get custom order flags
-        is_nova, is_aei, is_terracon, is_newLogo = tf.customrpt(order_obj)
+        is_nova, is_aei, is_terracon, is_partner, is_newLogo = tf.customrpt(order_obj)
         
         # get spatial references
         srGCS83,srWGS84,srGoogle,srUTM = tf.projlist(order_obj)
@@ -69,7 +69,7 @@ if __name__ == '__main__':
         
         # open mxd and create map extent
         logger.debug("#1")
-        mxd, df = tf.mapDocument(is_nova,is_terracon, srUTM)
+        mxd, df = tf.mapDocument(is_nova,is_terracon,is_partner, srUTM)
         map_scale, needtif = tf.mapExtent(df, mxd, srUTM, cfg.multipage)
 
         # set boundary

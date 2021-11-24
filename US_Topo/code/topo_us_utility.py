@@ -450,6 +450,9 @@ class topo_us_rpt(object):
             cfg.annot_poly = cfg.annot_poly_c
             cfg.annot_line = cfg.annot_line_c
             arcpy.AddMessage('...custom colour boundary set.')
+        elif order_obj.company_id in [49966]:
+            cfg.annot_poly = cfg.annot_poly_y
+            cfg.annot_line = cfg.annot_line_y       
         else:
             arcpy.AddMessage('...no custom colour boundary set.')
 
@@ -480,6 +483,15 @@ class topo_us_rpt(object):
             arcpy.AddWarning("### is_terracon) failed...")
         arcpy.AddMessage("is_terracon = " + self.is_terracon)
 
+        self.is_partner = 'N'
+        try:
+            expression = "select decode(c.company_id, 49966, 'Y', 'N') is_partner from orders o, customer c where o.customer_id = c.customer_id and o.order_id=" + str(order_obj.id)
+            self.is_partner = self.oracle.query(expression)[0][0]
+        except Exception as e:
+            arcpy.AddWarning(e)
+            arcpy.AddWarning("### is_partner) failed...")
+        arcpy.AddMessage("is_partner = " + self.is_partner)
+
         self.is_newLogo = 'N'
         try:
             function = 'ERIS_CUSTOMER.IsCustomLogo'
@@ -494,7 +506,7 @@ class topo_us_rpt(object):
             arcpy.AddWarning("### ERIS_CUSTOMER.IsCustomLogo failed...")
         arcpy.AddMessage("is_newLogo = " + self.is_newLogo)
 
-        return self.is_nova, self.is_aei, self.is_terracon, self.is_newLogo
+        return self.is_nova, self.is_aei, self.is_terracon, self.is_partner, self.is_newLogo
 
     def delyear(self, yeardel7575, yeardel1515, dict7575, dict1515):
         if yeardel7575:
@@ -554,7 +566,7 @@ class topo_us_rpt(object):
         del point
         del array
 
-    def mapDocument(self, is_nova,is_terracon, projection):
+    def mapDocument(self, is_nova,is_terracon,is_partner, projection):
         arcpy.env.overwriteOutput = True
         arcpy.env.outputCoordinateSystem = projection
 
@@ -562,6 +574,8 @@ class topo_us_rpt(object):
             mxd = arcpy.mapping.MapDocument(cfg.mxdfile_nova)
         elif is_terracon == 'Y':
             mxd = arcpy.mapping.MapDocument(cfg.mxdfile_terracon)
+        elif is_partner == 'Y':
+            mxd = arcpy.mapping.MapDocument(cfg.mxdfile_partner)
         else:
             mxd = arcpy.mapping.MapDocument(cfg.mxdfile)
 

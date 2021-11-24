@@ -25,28 +25,30 @@ def server_loc_config(configpath,environment):
     server_config = {'dbconnection':dbconnection,'reportcheck':reportcheck,'viewer':reportviewer,'instant':reportinstant,'noninstant':reportnoninstant,'viewer_upload':upload_viewer}
     return server_config
 
-def createScratch():
+# def createScratch():
+#     scratch = r'C:\Users\JLoucks\Documents\JL\test1'
+#     scratchgdb = "scratch.gdb"
+#     if not os.path.exists(scratch):
+#         os.mkdir(scratch)
+#     if not os.path.exists(os.path.join(scratch, scratchgdb)):
+#         arcpy.CreateFileGDB_management(scratch, "scratch.gdb")
+#     return scratch, scratchgdb
 
-    scratch_gdb = "scratch.gdb"
-    if not os.path.exists(os.path.join(arcpy.env.scratchFolder, scratch_gdb)):
-        arcpy.CreateFileGDB_management(arcpy.env.scratchFolder, "scratch.gdb")
-    return scratch_gdb
-
-# arcpy parameters
+##arcpy parameters
 OrderIDText = arcpy.GetParameterAsText(0)
 BufsizeText = arcpy.GetParameterAsText(1)
 yesBoundary = 'yes' if arcpy.GetParameterAsText(2).lower()=='yes' or arcpy.GetParameterAsText(2).lower()=='arrow' else ('fixed' if arcpy.GetParameterAsText(2).lower()=='fixed' else 'no')
 multipage = arcpy.GetParameterAsText(3)
 gridsize = arcpy.GetParameterAsText(4)
 scratch = arcpy.env.scratchFolder
-scratch_gdb = createScratch()
+scratchgdb = arcpy.env.scratchGDB
 
-# OrderIDText = '21110500473'
+# OrderIDText = '1214789'
 # BufsizeText = '2.4'
 # yesBoundary = 'yes'#'yes' if arcpy.GetParameterAsText(2).lower()=='yes' or arcpy.GetParameterAsText(2).lower()=='arrow' else ('fixed' if arcpy.GetParameterAsText(2).lower()=='fixed' else 'no')
 # gridsize = '0'
 # multipage = 'no'
-
+# scratch,scratchgdb = createScratch()
 
 # order info
 order_obj = models.Order().get_order(OrderIDText)
@@ -59,15 +61,15 @@ order_obj = models.Order().get_order(OrderIDText)
 # delyearFlag = "N"                   # Y/N, for internal use only, blank maps, etc.
 
 # scratch file/folder outputs
-# scratch, scratch_gdb = createScratch()
+# scratch, scratchgdb = createScratch()
 summaryPdf = os.path.join(scratch,'summary.pdf')
 coverPdf = os.path.join(scratch,"cover.pdf")
 shapePdf = os.path.join(scratch, 'shape.pdf')
 annotPdf = os.path.join(scratch, "annot.pdf")
-orderGeometry = os.path.join(scratch, scratch_gdb, "orderGeometry")
-orderGeometryPR = os.path.join(scratch, scratch_gdb, "orderGeometryPR")
-orderBuffer = os.path.join(scratch, scratch_gdb, "buffer")
-extent = os.path.join(scratch, scratch_gdb, "extent")
+orderGeometry = os.path.join(scratch, scratchgdb, "orderGeometry")
+orderGeometryPR = os.path.join(scratch, scratchgdb, "orderGeometryPR")
+orderBuffer = os.path.join(scratch, scratchgdb, "buffer")
+extent = os.path.join(scratch, scratchgdb, "extent")
 
 # connections/report outputs
 server_environment = 'prod'
@@ -100,6 +102,7 @@ tifdir_c = os.path.join(masterfolder, "USGS_currentTopo_Geotiff")
 mxdfile = os.path.join(mxdpath,"template_new.mxd")
 mxdfile_nova = os.path.join(mxdpath,'template_nova_new.mxd')
 mxdfile_terracon = os.path.join(mxdpath,'template_terracon.mxd')
+mxdfile_partner = os.path.join(mxdpath,'template_partner.mxd')
 
 # layers
 topolyrfile_none = os.path.join(mxdpath,"topo.lyr")
@@ -119,6 +122,8 @@ annot_line = os.path.join(mxdpath,"annot_line.pdf")
 annot_point = os.path.join(mxdpath,"annot_point.pdf")
 annot_poly_c = os.path.join(mxdpath,"annot_poly_red.pdf")
 annot_line_c = os.path.join(mxdpath,"annot_line_red.pdf")
+annot_poly_y = os.path.join(mxdpath,"annot_poly_yellow.pdf")
+annot_line_y = os.path.join(mxdpath,"annot_line_yellow.pdf")
 
 # logos
 logopath = os.path.join(mxdpath,"logos")
