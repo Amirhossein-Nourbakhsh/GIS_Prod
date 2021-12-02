@@ -186,7 +186,7 @@ try:
     arcpy.env.OverWriteOutput = True
 
 # LOCAL #######################################################################################################
-    OrderIDText = '1236978'
+    OrderIDText = '1207637'
     scratch_gdb = arcpy.CreateFileGDB_management(scratch_folder,r"scratch_gdb.gdb")   # for tables to make Querytable
     scratch_gdb = os.path.join(scratch_folder,r"scratch_gdb.gdb")
 ###############################################################################################################
@@ -205,7 +205,7 @@ try:
         cur.execute("select geometry_type, geometry, radius_type  from eris_order_geometry where order_id =" + OrderIDText)
         t = cur.fetchone()
 
-        # cur.callproc('eris_psr.ClearOrder', (OrderIDText,))
+        cur.callproc('eris_psr.ClearOrder', (OrderIDText,))
 
         OrderType = str(t[0])
         OrderCoord = eval(str(t[1]))
