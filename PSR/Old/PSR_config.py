@@ -24,7 +24,8 @@ def server_loc_config(configpath,environment):
         return 'invalid server configuration'
 
 server_environment = 'prod'
-server_config_file = r'\\cabcvan1gis006\GISData\ERISServerConfig.ini'
+# server_config_file = r'\\cabcvan1gis006\GISData\ERISServerConfig.ini'
+server_config_file = r'\\cabcvan1gis007\gptools\ERISServerConfig.ini'
 server_config = server_loc_config(server_config_file,server_environment)
 connectionString = r'ERIS_GIS/gis295@GMPRODC.glaciermedia.inc' #eris_gis/gis295@cabcvan1ora003.glaciermedia.inc:1521/GMPRODC
 report_path = server_config['noninstant']
