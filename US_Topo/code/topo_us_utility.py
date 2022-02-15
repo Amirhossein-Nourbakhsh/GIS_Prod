@@ -808,6 +808,8 @@ class topo_us_rpt(object):
             for row in reader:
                 if row['Cell ID'] in rowsMain or row['Cell ID'] in rowsAdj:
                     pdfname = row["Filename"].strip()
+                    arcpy.AddMessage("Filename"+ pdfname)
+                    arcpy.AddMessage("Before strip"+ row["Filename"])
                     # if not os.path.exists(os.path.join(cfg.tifdir_c, pdfname.replace(".pdf", "_t.tif"))):
                     #     continue
 
@@ -818,7 +820,7 @@ class topo_us_rpt(object):
                         if year2use[0:2] != "20":
                             arcpy.AddWarning("### Error in the year of the map..." + year2use)
                     
-                    yearalldict[pdfname] = {}
+                    #yearalldict[pdfname] = {}
                     infomatrix.append([row["Cell ID"],row["Grid Size"],pdfname,year2use,str("topo"), "rowsMain"])                       # need to 'str' 'topo' because arcgis server analyze was giving error 00068
 
             f.seek(0)       # resets to beginning of csv
@@ -887,7 +889,7 @@ class topo_us_rpt(object):
 
             if os.path.exists(os.path.join(tifdir, tifname + "_t.tif")):
                 if '.' in tifname:
-                    tifname = tifname.replace('.','')
+                   tifname = tifname.replace('.','')
 
                 # need to make a local copy of the tif file for fast data source replacement
                 shutil.copyfile(os.path.join(tifdir,tifname+"_t.tif"),os.path.join(copydir,tifname+'.tif'))
@@ -1031,7 +1033,6 @@ class topo_us_rpt(object):
 
                     if multipage == "Y":
                         pdfmm = PdfFileReader(open(os.path.join(cfg.scratch,"map_" + seriesText + "_" + year + "_mm.pdf"),'rb'))
-                        
                         output.addPage(pdf.getPage(0))
                         output.addBookmark(year + "_" + seriesText.replace("75", "7.5"), n+2)   #n+1 to accommodate the summary page                        
                         
@@ -1040,6 +1041,7 @@ class topo_us_rpt(object):
                             n = n + 1
                         n = n + 1
                     else:
+                        
                         output.addPage(pdf.getPage(0))
                         output.addBookmark(year + "_" + seriesText.replace("75", "7.5"), n+2)   #n+1 to accommodate the summary page
                         n = n + 1

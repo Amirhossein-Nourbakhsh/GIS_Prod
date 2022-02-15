@@ -53,7 +53,7 @@ class Machine:
 class Credential:
     oracle_dev = r'eris_gis/gis295@GMDEVC.glaciermedia.inc'
     oracle_test = r'eris_gis/gis295@GMTESTC.glaciermedia.inc'
-    oracle_production = r'eris_gis/gis295@GMPRODC.glaciermedia.inc'
+    oracle_production = r'ERIS_GIS/gis295@cabcvan1ora003.glaciermedia.inc:1521/GMPRODC'
 
 class ReportPath:
     noninstant_reports_test = server_config['noninstant']
@@ -758,13 +758,20 @@ def export_to_kml(order_number,layer):
 if __name__ == '__main__': 
     try:
         # INPUT #####################################
-        order_id = arcpy.GetParameterAsText(0).strip()       
-        multi_page = True if (arcpy.GetParameterAsText(1).lower()=='yes' or arcpy.GetParameterAsText(1).lower()=='y') else False
-        grid_size = arcpy.GetParameterAsText(2).strip()#0#
-        code = arcpy.GetParameterAsText(3).strip()#'usa'#
-        is_instant = True if arcpy.GetParameterAsText(4).strip().lower()=='yes'else False
+        #order_id = arcpy.GetParameterAsText(0).strip()       
+        #multi_page = True if (arcpy.GetParameterAsText(1).lower()=='yes' or arcpy.GetParameterAsText(1).lower()=='y') else False
+        #grid_size = arcpy.GetParameterAsText(2).strip()#0#
+        #code = arcpy.GetParameterAsText(3).strip()#'usa'#
+        #is_instant = True #if arcpy.GetParameterAsText(4).strip().lower()=='yes'else False
+
+
+        order_id ="1292707"     
+        multi_page = False 
+        grid_size = 0
+        code = "usa"
+        is_instant = True
         report_type = ''
-        scratch = arcpy.env.scratchFolder
+        scratch = "C:\Amir\scratch"
         env = 'prod'
         
         ##get info for order from oracle
@@ -773,7 +780,7 @@ if __name__ == '__main__':
         srGoogle = arcpy.SpatialReference(3857)
         srWGS84 = arcpy.SpatialReference(4326)
         # Server Setting ############################
-        code = 9093 if code.strip().lower()=='usa' else 9036 if code.strip().lower()=='can' else 9049 if code.strip().lower()=='mex' else ValueError
+        code = 9093 #if code.strip().lower()=='usa' else 9036 if code.strip().lower()=='can' else 9049 if code.strip().lower()=='mex' else ValueError
         config = ProdConfig(code)
 
         # PARAMETERS ################################
@@ -834,7 +841,7 @@ if __name__ == '__main__':
             buffer_max = os.path.join(scratch,buffer_name%(len(orderInfo['BUFFER_GEOMETRY'])+1))
             max_buffer = max([float(_.keys()[0]) for _ in orderInfo['BUFFER_GEOMETRY']]) if orderInfo['BUFFER_GEOMETRY'] !=[] else 0#
             max_buffer ="%s MILE"%(2*max_buffer if max_buffer>0.2 else 2)
-            # print(orderInfo['BUFFER_GEOMETRY'])
+            print(orderInfo['BUFFER_GEOMETRY'])
             arcpy.Buffer_analysis(order_geometry_shp,buffer_max,max_buffer)
             end = timeit.default_timer()
             arcpy.AddMessage(('create max buffer', round(end -start,4)))

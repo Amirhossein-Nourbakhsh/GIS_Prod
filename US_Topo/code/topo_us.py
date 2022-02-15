@@ -96,6 +96,14 @@ if __name__ == '__main__':
             arcpy.AddMessage("dict7575: " + str(dict7575.keys()))
             arcpy.AddMessage("dict1515: " + str(dict1515.keys()))
 
+
+            #del dict1515["1929"]
+            #del dict1515["1908"]
+            #del dict1515["1959"]
+            #del dict7575["1974"]
+            #del dict7575["1981"]
+            #del dict7575["1999"]
+            
             # # remove blank maps flag
             # if cfg.delyearFlag == 'Y':
             #     delyear75 = filter(None, str(raw_input("Years you want to delete in the 7.5min series (comma-delimited):\n>>> ")).replace(" ", "").strip().split(","))
@@ -177,5 +185,5 @@ if __name__ == '__main__':
         handler.close()
 
     finish = time.clock()
-    # arcpy.AddMessage(cfg.reportcheckFolder + "\\TopographicMaps\\" + order_obj.number + "_US_Topo.pdf")
+    arcpy.AddMessage(cfg.reportcheckFolder + "\\TopographicMaps\\" + order_obj.number + "_US_Topo.pdf")
     arcpy.AddMessage("Finished in " + str(round(finish-start, 2)) + " secs")
